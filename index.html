@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a0c10">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
 <title>Spotter Board, kommentatorns prep</title>
 <style>
   :root{
@@ -161,14 +164,22 @@
   /* print */
   #printArea{display:none}
   @media print{
+    @page{size:A4;margin:14mm}
     body *{visibility:hidden}
     #printArea,#printArea *{visibility:visible}
-    #printArea{display:block;position:absolute;inset:0;padding:0;color:#000;background:#fff}
-    .pcard{border:1px solid #000;border-radius:8px;padding:8px 10px;margin-bottom:8px;break-inside:avoid}
-    .pcard h3{margin:0 0 4px}
+    #printArea{display:block;position:absolute;inset:0;padding:0;color:#000;background:#fff;font-size:13pt;line-height:1.45}
+    .pmatch{break-after:page}
+    .pmatch:last-child{break-after:auto}
+    .pcard{border:1.5px solid #000;border-radius:8px;padding:10px 12px;margin-bottom:10px;break-inside:avoid}
+    .pcard h3{margin:0 0 4px;font-size:16pt}
     .pcard .pph{font-style:italic;color:#333}
     .pcard ul{margin:6px 0 0 18px}
-    .ptitle{font-size:20px;font-weight:900;margin-bottom:12px}
+    .pcard .prec{font-weight:900}
+    .ptitle{font-size:22pt;font-weight:900;margin-bottom:6px}
+    .phead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:12px}
+    .pqr{text-align:center;font-size:9pt;color:#333}
+    .pqr img{width:130px;height:130px;display:block}
+    .purl{font-size:9pt;color:#333;word-break:break-all;max-width:180px}
   }
 
   /* tags + paste + logs */
@@ -215,6 +226,7 @@
   <div class="tools">
     <div class="fs"><button id="fsm" title="Mindre text">A-</button><button id="fsp" title="Större text">A+</button></div>
     <button class="btn" id="favBtn" title="Visa bara favoriter">☆</button>
+    <button class="btn" id="helpBtn" title="Hjälp, data och säkerhetskopia">?</button>
     <button class="btn" id="matchBtn" title="Match-läge">⚔ Match</button>
     <button class="btn" id="printBtn" title="Skriv ut / PDF">⎙ Skriv ut</button>
     <button class="btn" id="exportBtn">Export</button>
@@ -224,6 +236,11 @@
   </div>
 </header>
 
+<div id="nudge" style="display:none;align-items:center;gap:10px;padding:8px 16px;background:rgba(255,210,63,.12);border-bottom:1px solid var(--line);color:var(--accent);font-weight:700;font-size:.9em">
+  <span id="nudgeText" style="flex:1"></span>
+  <button class="btn" onclick="exportNow()">Exportera nu</button>
+  <button class="btn ghost" onclick="dismissNudge()">Senare</button>
+</div>
 <div class="sports" id="sports"></div>
 <div class="count" id="count"></div>
 
@@ -344,6 +361,35 @@
   </div>
 </div>
 
+<!-- Help / data modal -->
+<div class="modal" id="hmodal">
+  <div class="sheet">
+    <h2>Kom igång</h2>
+    <p style="color:var(--muted);margin-top:0">Spotter Board är din prep i båset. Allt sparas lokalt i den här webbläsaren, inget skickas någonstans.</p>
+    <ul style="line-height:1.7;padding-left:18px">
+      <li><b>Tavla:</b> sökbar databas över spelare och lag. Tryck <kbd>/</kbd> för sök, <kbd>a</kbd> för ny.</li>
+      <li><b>Matcher:</b> lägg upp dagens matcher, öppna i Match-läge eller Live (<kbd>m</kbd>).</li>
+      <li><b>Logg:</b> fras-spårare och självutvärdering efter match.</li>
+      <li><b>Live-läge:</b> tryck <kbd>1</kbd> eller <kbd>2</kbd> för att zooma in en sida, <kbd>0</kbd> för båda, <kbd>s</kbd> byter sida.</li>
+    </ul>
+    <h3 style="margin-top:18px;font-size:.85em;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted)">Exempeldata</h3>
+    <div class="rowbtns">
+      <button class="btn" onclick="restoreSamples()">Återställ exempel</button>
+      <button class="btn danger" onclick="clearSamples()">Rensa exempeldata</button>
+      <button class="btn danger" onclick="clearAll()">Töm allt</button>
+    </div>
+    <h3 style="margin-top:18px;font-size:.85em;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted)">Säkerhetskopia</h3>
+    <div id="dataStatus" class="hint" style="margin-bottom:8px"></div>
+    <div class="rowbtns">
+      <button class="btn" onclick="exportNow()">Exportera till fil</button>
+      <button class="btn" onclick="backupNow()">Spara lokal kopia</button>
+      <button class="btn" onclick="restoreBackup()">Återställ lokal kopia</button>
+      <button class="btn" onclick="restoreImport()">Ångra senaste import</button>
+    </div>
+    <div class="modal-actions"><div></div><button class="btn primary" onclick="closeModal('hmodal')">Stäng</button></div>
+  </div>
+</div>
+
 <div id="printArea"></div>
 
 <script>
@@ -351,6 +397,7 @@ const COLORS=["#ffd23f","#3ad0c8","#ff7a59","#46c97a","#7aa2ff","#c77dff","#ff5d
 const STORE="spotterboard.v1";
 const MSTORE="spotterboard.matches";
 const LSTORE="spotterboard.logs";
+const LIVE_URL="https://mattias-beachlasse.github.io/spotter-board/";
 const TEMPLATES={
   "Beachvolley":["Längd","Hand","Sida","Block/set","Ess/set"],
   "Tennis":["Hand","Bästa underlag","Ess/match","Förstaserve %","Ranking"],
@@ -360,7 +407,7 @@ const TEMPLATES={
   "Standard":["Nyckeltal 1","Nyckeltal 2","Nyckeltal 3"]
 };
 const CHECK=[["uttal","Uttal kollat"],["fakta","Fakta klara"],["h2h","Head-to-head klart"],["rekord","Rekord noterade"],["arena","Väder och arena kollat"]];
-let state={view:"board",entries:[],matches:[],logs:[],phrases:[],sport:"Alla",sel:null,q:"",favOnly:false,matchA:null,matchB:null,selMatch:null};
+let state={view:"board",entries:[],matches:[],logs:[],phrases:[],sport:"Alla",sel:null,q:"",favOnly:false,matchA:null,matchB:null,selMatch:null,spotlight:null};
 let editId=null, editColor=COLORS[0], mEditId=null;
 let editAudio=null, mediaRec=null, recChunks=[];
 let PRON={};
@@ -605,17 +652,18 @@ function renderMatchMode(){
 
 /* ---------- live view (v5) ---------- */
 function openLive(aId,bId,label){
-  state.matchA=aId||state.matchA;state.matchB=bId||state.matchB;
-  document.getElementById("liveLabel").textContent=label||"";
+  state.matchA=aId||state.matchA;state.matchB=bId||state.matchB;state.spotlight=null;
+  document.getElementById("liveLabel").textContent=(label?label+"   ":"")+"(1 / 2 zoomar, 0 båda, s byter)";
   document.getElementById("liveview").classList.add("open");renderLive();
 }
 function openLiveFromCard(id){const m=state.matches.find(x=>x.id===id);if(!m)return;openLive(m.aId,m.bId,sideName(m,"a")+" vs "+sideName(m,"b"))}
 function openLiveFromMatchMode(){openLive(state.matchA,state.matchB,"")}
 function closeLive(){document.getElementById("liveview").classList.remove("open")}
-function liveSide(id){
+function liveSide(id,side){
   const e=entry(id);
-  if(!e)return `<div class="lside"><div class="empty">Ingen kopplad post</div></div>`;
-  return `<div class="lside">
+  const click=side?` onclick="toggleSpotlight('${side}')" style="cursor:pointer"`:"";
+  if(!e)return `<div class="lside"${click}><div class="empty">Ingen kopplad post</div></div>`;
+  return `<div class="lside"${click}>
     ${e.record?`<div class="recbanner" style="font-size:1.1em">🏆 ${esc(e.record)}</div>`:""}
     <div style="display:flex;align-items:flex-start;gap:18px">
       ${e.num?`<div class="lbignum">${esc(e.num)}</div>`:""}
@@ -625,7 +673,13 @@ function liveSide(id){
     ${section("Nuggets",e.nuggets,"facts nuggets")}
   </div>`;
 }
-function renderLive(){document.getElementById("lcols").innerHTML=liveSide(state.matchA)+`<div class="lcenter">VS</div>`+liveSide(state.matchB)}
+function toggleSpotlight(side){state.spotlight=state.spotlight===side?null:side;renderLive()}
+function renderLive(){
+  const a=state.matchA,b=state.matchB,sp=state.spotlight,wrap=document.getElementById("lcols");
+  if(sp==="A"){wrap.style.gridTemplateColumns="1fr";wrap.innerHTML=liveSide(a,"A")}
+  else if(sp==="B"){wrap.style.gridTemplateColumns="1fr";wrap.innerHTML=liveSide(b,"B")}
+  else{wrap.style.gridTemplateColumns="";wrap.innerHTML=liveSide(a,"A")+`<div class="lcenter">VS</div>`+liveSide(b,"B")}
+}
 
 /* ---------- entry modal ---------- */
 function buildSwatches(){const w=document.getElementById("swatches");w.innerHTML="";COLORS.forEach(c=>{const s=document.createElement("div");s.className="sw"+(c===editColor?" sel":"");s.style.background=c;s.onclick=()=>{editColor=c;buildSwatches()};w.appendChild(s)})}
@@ -724,7 +778,8 @@ function deleteMatch(){if(!mEditId)return;if(!confirm("Ta bort matchen?"))return
 /* ---------- print (v5) ---------- */
 function printBoard(){
   const items=state.entries.filter(matches).sort((a,b)=>a.name.localeCompare(b.name,"sv"));
-  const html=`<div class="ptitle">Spotter Board${state.sport!=="Alla"?", "+esc(state.sport):""}</div>`+
+  const head=`<div class="phead"><div><div class="ptitle">Spotter Board${state.sport!=="Alla"?", "+esc(state.sport):""}</div><div style="font-size:10pt">${items.length} poster · ${esc(todayStr())}</div></div>${qrBlock()}</div>`;
+  const html=head+
     items.map(e=>`<div class="pcard"><h3>${e.num?esc(e.num)+" ":""}${esc(e.name)}${e.phon?` <span class="pph">(${esc(e.phon)})</span>`:""}</h3>
       <div>${esc([e.team,e.role,e.sport].filter(Boolean).join(" · "))}</div>
       ${e.record?`<div><b>Rekord på spel:</b> ${esc(e.record)}</div>`:""}
@@ -743,11 +798,11 @@ function printMatch(id){
       ${(e.fields||[]).length?`<div>${(e.fields||[]).map(x=>esc(x.label)+": "+esc(x.value)).join(" | ")}</div>`:""}
       ${(e.facts||[]).length?`<ul>${(e.facts||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
       ${(e.nuggets||[]).length?`<ul>${(e.nuggets||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}</div>`}
-  const html=`<div class="ptitle">${esc(sideName(m,"a"))} vs ${esc(sideName(m,"b"))}</div>
-    <div>${esc([m.date,m.time,m.sport,m.venue,m.weather].filter(Boolean).join(" · "))}</div>
-    ${m.note?`<div><b>Not:</b> ${esc(m.note)}</div>`:""}<br>${card("a")}${card("b")}`;
+  const head=`<div class="phead"><div><div class="ptitle">${esc(sideName(m,"a"))} vs ${esc(sideName(m,"b"))}</div><div style="font-size:10pt">${esc([m.date,m.time,m.sport,m.venue,m.weather].filter(Boolean).join(" · "))}</div></div>${qrBlock()}</div>`;
+  const html=`<div class="pmatch">`+head+(m.note?`<div class="prec">Not: ${esc(m.note)}</div>`:"")+card("a")+card("b")+`</div>`;
   doPrint(html);
 }
+function qrBlock(){return `<div class="pqr"><img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(LIVE_URL)}" alt="QR till appen"><div class="purl">${esc(LIVE_URL)}</div></div>`}
 function doPrint(html){document.getElementById("printArea").innerHTML=html;window.print()}
 
 /* ---------- v6 paste parser ---------- */
@@ -865,27 +920,73 @@ document.getElementById("deleteBtn").onclick=deleteEntry;
 document.getElementById("mSaveBtn").onclick=saveMatch;
 document.getElementById("mCancelBtn").onclick=()=>closeModal("mmodal");
 document.getElementById("mDeleteBtn").onclick=deleteMatch;
-document.getElementById("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify({entries:state.entries,matches:state.matches,logs:state.logs,phrases:state.phrases},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="spotterboard-"+todayStr()+".json";a.click()};
+document.getElementById("exportBtn").onclick=exportNow;
+document.getElementById("helpBtn").onclick=openHelp;
 document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
 document.getElementById("importFile").onchange=e=>{if(e.target.files[0])importData(e.target.files[0]);e.target.value=""};
-function importData(file){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.entries||!Array.isArray(d.entries))throw 0;if(confirm("Ersätta nuvarande data? (Avbryt = slå ihop)")){state.entries=d.entries.map(e=>({id:e.id||uid(),...e}));if(d.matches)state.matches=d.matches;if(d.logs)state.logs=d.logs;if(d.phrases)state.phrases=d.phrases}else{const ids=new Set(state.entries.map(e=>e.id));d.entries.forEach(e=>{if(!e.id||!ids.has(e.id))state.entries.push({id:e.id||uid(),...e})});if(d.matches){const mids=new Set(state.matches.map(m=>m.id));d.matches.forEach(m=>{if(!m.id||!mids.has(m.id))state.matches.push({id:m.id||uid(),...m})})}}state.sel=null;state.selMatch=null;render()}catch(e){alert("Kunde inte läsa filen.")}};r.readAsText(file)}
+function importData(file){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.entries||!Array.isArray(d.entries))throw 0;localStorage.setItem("spotterboard.preimport",JSON.stringify({entries:state.entries,matches:state.matches,logs:state.logs,phrases:state.phrases}));if(confirm("Ersätta nuvarande data? (Avbryt = slå ihop)")){state.entries=d.entries.map(e=>({id:e.id||uid(),...e}));if(d.matches)state.matches=d.matches;if(d.logs)state.logs=d.logs;if(d.phrases)state.phrases=d.phrases}else{const ids=new Set(state.entries.map(e=>e.id));d.entries.forEach(e=>{if(!e.id||!ids.has(e.id))state.entries.push({id:e.id||uid(),...e})});if(d.matches){const mids=new Set(state.matches.map(m=>m.id));d.matches.forEach(m=>{if(!m.id||!mids.has(m.id))state.matches.push({id:m.id||uid(),...m})})}}state.sel=null;state.selMatch=null;render()}catch(e){alert("Kunde inte läsa filen.")}};r.readAsText(file)}
 [["modal"],["mmodal"]].forEach(([id])=>document.getElementById(id).addEventListener("click",e=>{if(e.target.id===id)closeModal(id)}));
 document.getElementById("fsp").onclick=()=>setFs(.1);
 document.getElementById("fsm").onclick=()=>setFs(-.1);
 function setFs(d){let v=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--fs"))||1;v=Math.min(1.8,Math.max(.8,v+d));document.documentElement.style.setProperty("--fs",v);localStorage.setItem("fs",v)}
 document.addEventListener("keydown",e=>{
-  if(e.key==="Escape"){closeModal("modal");closeModal("mmodal");closeMatchView();closeLive()}
+  if(e.key==="Escape"){closeModal("modal");closeModal("mmodal");closeModal("hmodal");closeMatchView();closeLive()}
   if([...document.querySelectorAll(".modal.open")].length)return;
+  if(document.getElementById("liveview").classList.contains("open")){
+    if(e.key==="1"){state.spotlight="A";renderLive()}
+    else if(e.key==="2"){state.spotlight="B";renderLive()}
+    else if(e.key==="0"||e.key.toLowerCase()==="b"){state.spotlight=null;renderLive()}
+    else if(e.key.toLowerCase()==="s"){swapSides();renderLive()}
+    return;
+  }
   const tag=(e.target.tagName||"").toLowerCase();if(tag==="input"||tag==="textarea"||tag==="select")return;
   if(e.key==="/"&&state.view==="board"){e.preventDefault();document.getElementById("q").focus()}
   if(e.key==="a"){e.preventDefault();state.view==="matches"?openMatchModal():openAdd()}
   if(e.key==="m"){e.preventDefault();openMatchView()}
 });
 
+/* ---------- v9b: PWA, onboarding, data safety ---------- */
+const SAMPLE_IDS=["s1","s2","s3","s4"], SAMPLE_MIDS=["m1","m2"];
+function openHelp(){updateDataStatus();openModal("hmodal")}
+function fmtDate(ms){if(!ms)return "aldrig";return new Date(+ms).toISOString().slice(0,10)}
+function updateDataStatus(){
+  const last=localStorage.getItem("spotterboard.lastexport");
+  let bt="ingen";try{const o=JSON.parse(localStorage.getItem("spotterboard.localbackup"));if(o&&o.ts)bt=fmtDate(o.ts)}catch(e){}
+  const el=document.getElementById("dataStatus");
+  if(el)el.textContent="Poster: "+state.entries.length+" · Matcher: "+state.matches.length+" · Senaste export: "+fmtDate(last)+" · Lokal kopia: "+bt;
+}
+function exportNow(){
+  const blob=new Blob([JSON.stringify({entries:state.entries,matches:state.matches,logs:state.logs,phrases:state.phrases},null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="spotterboard-"+todayStr()+".json";a.click();
+  localStorage.setItem("spotterboard.lastexport",Date.now());hideNudge();updateDataStatus();
+}
+function snapshot(){return JSON.stringify({entries:state.entries,matches:state.matches,logs:state.logs,phrases:state.phrases,ts:Date.now()})}
+function applySnapshot(s){try{const o=JSON.parse(s);state.entries=o.entries||[];state.matches=o.matches||[];state.logs=o.logs||[];state.phrases=o.phrases||[];state.sel=null;state.selMatch=null;render();updateDataStatus();return true}catch(e){alert("Kunde inte återställa.");return false}}
+function backupNow(){localStorage.setItem("spotterboard.localbackup",snapshot());updateDataStatus();alert("Lokal kopia sparad i den här webbläsaren.")}
+function restoreBackup(){const s=localStorage.getItem("spotterboard.localbackup");if(!s){alert("Ingen lokal kopia hittad.");return}if(confirm("Återställ den lokala kopian? Nuvarande data ersätts."))applySnapshot(s)}
+function restoreImport(){const s=localStorage.getItem("spotterboard.preimport");if(!s){alert("Ingen import att ångra.");return}if(confirm("Ångra senaste import och gå tillbaka till hur det var innan?"))applySnapshot(s)}
+function clearSamples(){if(!confirm("Ta bort exempelposterna och exempelmatcherna?"))return;state.entries=state.entries.filter(e=>!SAMPLE_IDS.includes(e.id));state.matches=state.matches.filter(m=>!SAMPLE_MIDS.includes(m.id));state.sel=null;state.selMatch=null;render();updateDataStatus()}
+function restoreSamples(){const ids=new Set(state.entries.map(e=>e.id));SAMPLE().forEach(e=>{if(!ids.has(e.id))state.entries.push(e)});const mids=new Set(state.matches.map(m=>m.id));SAMPLEMATCHES().forEach(m=>{if(!mids.has(m.id))state.matches.push(m)});render();updateDataStatus()}
+function clearAll(){if(!confirm("Tömma ALLT (poster, matcher, loggar)? En lokal kopia sparas så du kan ångra via Återställ lokal kopia."))return;localStorage.setItem("spotterboard.localbackup",snapshot());state.entries=[];state.matches=[];state.logs=[];state.phrases=[];state.sel=null;state.selMatch=null;render();updateDataStatus()}
+function hideNudge(){const n=document.getElementById("nudge");if(n)n.style.display="none"}
+function dismissNudge(){hideNudge();localStorage.setItem("spotterboard.nudgesnooze",Date.now())}
+function checkNudge(){
+  if(!state.entries.some(e=>!SAMPLE_IDS.includes(e.id)))return;
+  const last=+localStorage.getItem("spotterboard.lastexport")||0;
+  const snooze=+localStorage.getItem("spotterboard.nudgesnooze")||0;
+  if((Date.now()-last)/86400000>7 && (Date.now()-snooze)/86400000>3){
+    document.getElementById("nudgeText").textContent="Säkerhetskopiera din prep. Det var ett tag sen du exporterade, och all data ligger bara lokalt.";
+    document.getElementById("nudge").style.display="flex";
+  }
+}
+
 /* init */
 const sf=localStorage.getItem("fs");if(sf)document.documentElement.style.setProperty("--fs",sf);
 try{const m=JSON.parse(localStorage.getItem("spotterboard.match"));if(m){state.matchA=m.a;state.matchB=m.b}}catch(e){}
 load();render();
+if("serviceWorker" in navigator && location.protocol.indexOf("http")===0){navigator.serviceWorker.register("sw.js").catch(()=>{})}
+if(!localStorage.getItem("spotterboard.onboarded")){openHelp();localStorage.setItem("spotterboard.onboarded","1")}
+checkNudge();
 </script>
 </body>
 </html>
