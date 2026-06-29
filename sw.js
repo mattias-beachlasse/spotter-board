@@ -1,4 +1,4 @@
-const CACHE = "spotterboard-v1";
+const CACHE = "spotterboard-v2";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", e => {
@@ -13,15 +13,29 @@ self.addEventListener("activate", e => {
   );
 });
 
+// Network-first for the app shell (so updates show up when online),
+// cache-first for everything else, cache as offline fallback throughout.
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
-  e.respondWith(
-    caches.match(e.request).then(r =>
-      r || fetch(e.request).then(resp => {
+  const accept = e.request.headers.get("accept") || "";
+  const isHTML = e.request.mode === "navigate" || accept.includes("text/html");
+  if (isHTML) {
+    e.respondWith(
+      fetch(e.request).then(resp => {
         const cp = resp.clone();
         caches.open(CACHE).then(c => c.put(e.request, cp));
         return resp;
-      }).catch(() => caches.match("./index.html"))
-    )
-  );
+      }).catch(() => caches.match(e.request).then(r => r || caches.match("./index.html")))
+    );
+  } else {
+    e.respondWith(
+      caches.match(e.request).then(r =>
+        r || fetch(e.request).then(resp => {
+          const cp = resp.clone();
+          caches.open(CACHE).then(c => c.put(e.request, cp));
+          return resp;
+        })
+      )
+    );
+  }
 });
