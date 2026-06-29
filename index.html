@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spotter Board, kommentatorns prep</title>
+<style>
+  :root{
+    --bg:#0a0c10; --panel:#13171d; --panel2:#191e26; --line:#262d38;
+    --text:#f3f5f8; --muted:#8c97a6; --accent:#ffd23f; --accent2:#3ad0c8;
+    --good:#46c97a; --warn:#ff7a59; --rec:#ff4d6d; --fs:1;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:calc(16px * var(--fs)); line-height:1.4; -webkit-font-smoothing:antialiased;
+    display:flex; flex-direction:column; height:100vh; overflow:hidden;
+  }
+  header{
+    display:flex; align-items:center; gap:12px; padding:12px 16px;
+    background:linear-gradient(180deg,#11151b,#0d1117); border-bottom:1px solid var(--line);
+    flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.3px;white-space:nowrap}
+  .brand .dot{width:12px;height:12px;border-radius:3px;background:var(--accent)}
+  .brand small{color:var(--muted);font-weight:600;font-size:.7em}
+  .tabs{display:flex;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:3px}
+  .tabs button{background:transparent;border:0;color:var(--muted);font-weight:800;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:.92em}
+  .tabs button.on{background:var(--accent);color:#1a1500}
+  .search{
+    flex:1; min-width:180px; display:flex; align-items:center; gap:8px;
+    background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:8px 12px;
+  }
+  .search input{flex:1; background:transparent; border:0; outline:0; color:var(--text); font-size:1.05em; font-weight:600;}
+  .search kbd{color:var(--muted);font-size:.7em;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .btn{
+    background:var(--panel2); color:var(--text); border:1px solid var(--line);
+    border-radius:9px; padding:8px 12px; font-weight:700; cursor:pointer; font-size:.95em; white-space:nowrap;
+  }
+  .btn:hover{border-color:#3a4250;background:#1f2630}
+  .btn.primary{background:var(--accent);color:#1a1500;border-color:var(--accent)}
+  .btn.primary:hover{background:#ffdd66}
+  .btn.ghost{background:transparent}
+  .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .fs{display:flex;gap:4px}
+  .fs button{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);cursor:pointer;font-weight:800}
+
+  .sports{display:flex;gap:8px;padding:10px 16px;overflow-x:auto;border-bottom:1px solid var(--line);background:#0d1117}
+  .chip{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:999px;padding:6px 14px;font-weight:700;cursor:pointer;white-space:nowrap;font-size:.9em;}
+  .chip.active{background:var(--accent);color:#1a1500;border-color:var(--accent)}
+  .count{color:var(--muted);font-size:.8em;padding:6px 16px}
+
+  main{display:grid;grid-template-columns:minmax(280px,380px) 1fr;flex:1;min-height:0}
+  .list{overflow:auto;border-right:1px solid var(--line);padding:10px}
+  .card{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;cursor:pointer;border:1px solid transparent;margin-bottom:6px;background:var(--panel);}
+  .card:hover{background:var(--panel2)}
+  .card.sel{border-color:var(--accent);background:#1c222b}
+  .card .stripe{width:6px;align-self:stretch;border-radius:3px;background:#444;min-height:36px}
+  .card .num{font-weight:900;font-size:1.2em;min-width:30px;text-align:center;color:var(--accent)}
+  .card .who{flex:1;min-width:0}
+  .card .who .nm{font-weight:800;font-size:1.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card .who .ph{color:var(--accent2);font-style:italic;font-size:.82em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card .who .tm{color:var(--muted);font-size:.8em}
+  .card .fav{color:var(--accent);font-size:1.1em;opacity:0}
+  .card.isfav .fav{opacity:1}
+
+  .detail{overflow:auto;padding:26px 30px}
+  .empty{height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);text-align:center;flex-direction:column;gap:10px}
+  .recbanner{background:rgba(255,77,109,.14);border:1px solid var(--rec);border-radius:10px;padding:10px 14px;font-weight:800;color:#ff8ba3;margin-bottom:14px;display:flex;gap:8px;align-items:center}
+  .dh{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap}
+  .dh .bignum{font-size:3em;font-weight:900;color:var(--accent);line-height:1}
+  .dh h1{font-size:2.4em;margin:0;line-height:1.05;font-weight:900}
+  .dh .ph{color:var(--accent2);font-style:italic;font-size:1.3em;margin-top:4px;display:flex;align-items:center;gap:10px}
+  .speak{background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--text);cursor:pointer;padding:3px 9px;font-size:.7em;font-style:normal;font-weight:700}
+  .meta{color:var(--muted);font-weight:700;margin-top:6px}
+  .sec{margin-top:22px}
+  .sec h3{margin:0 0 8px;font-size:.8em;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+  .fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .fields .f{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 11px}
+  .fields .f .l{color:var(--muted);font-size:.72em;text-transform:uppercase;letter-spacing:.6px;font-weight:800}
+  .fields .f .v{font-weight:800;font-size:1.1em;margin-top:2px}
+  .facts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .facts li{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:10px 12px;font-size:1.05em}
+  .nuggets li{border-left-color:var(--accent2)}
+  .statbox{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;white-space:pre-wrap;font-size:1.05em}
+  .editrow{margin-top:26px;display:flex;gap:10px;flex-wrap:wrap}
+
+  /* matches view */
+  .mlist{overflow:auto;border-right:1px solid var(--line);padding:12px}
+  .daygroup{margin-bottom:16px}
+  .daygroup h4{margin:0 0 8px;font-size:.78em;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted)}
+  .daygroup.today h4{color:var(--accent)}
+  .mrow{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;cursor:pointer;background:var(--panel);border:1px solid transparent;margin-bottom:6px}
+  .mrow:hover{background:var(--panel2)}
+  .mrow.sel{border-color:var(--accent);background:#1c222b}
+  .mrow.done{opacity:.55}
+  .mrow .time{font-weight:900;color:var(--accent);min-width:48px}
+  .mrow .vs{flex:1;min-width:0}
+  .mrow .vs .t{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mrow .vs .s{color:var(--muted);font-size:.8em}
+  .matchdetail{overflow:auto;padding:24px 28px}
+  .vsgrid{display:grid;grid-template-columns:1fr 64px 1fr;gap:16px;align-items:start}
+  .vsmid{display:flex;align-items:center;justify-content:center;font-size:1.6em;font-weight:900;color:var(--accent)}
+  .infoline{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-weight:700;margin:14px 0}
+  .infoline b{color:var(--text)}
+  .checklist{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+  .checklist label{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:9px 12px;cursor:pointer;text-transform:none;letter-spacing:0;color:var(--text);font-size:1em;font-weight:600;margin:0}
+  .checklist input{width:18px;height:18px;accent-color:var(--good)}
+
+  /* match mode + live overlays */
+  .matchview,.liveview{position:fixed;inset:0;background:var(--bg);z-index:40;display:none;flex-direction:column}
+  .matchview.open,.liveview.open{display:flex}
+  .mtop{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#11151b,#0d1117)}
+  .mtop .ttl{font-weight:900;letter-spacing:.4px}
+  .mtop .ttl b{color:var(--accent)}
+  .mcols{flex:1;display:grid;grid-template-columns:1fr minmax(190px,260px) 1fr;min-height:0}
+  .mside{overflow:auto;padding:22px 26px}
+  .mcenter{border-left:1px solid var(--line);border-right:1px solid var(--line);padding:18px;display:flex;flex-direction:column;background:#0d1117}
+  .vsbig{font-size:2.2em;font-weight:900;color:var(--accent);text-align:center;margin-bottom:12px;letter-spacing:2px}
+  .mpick{width:100%;font-weight:700}
+
+  /* live view: extra large, minimal */
+  .liveview{background:#06080b}
+  .lcols{flex:1;display:grid;grid-template-columns:1fr 90px 1fr;min-height:0}
+  .lside{overflow:auto;padding:30px 34px}
+  .lside h1{font-size:3.4em;font-weight:900;margin:0;line-height:1}
+  .lside .lph{color:var(--accent2);font-style:italic;font-size:1.6em;margin-top:6px}
+  .lside .lmeta{color:var(--muted);font-weight:800;margin-top:8px;font-size:1.1em}
+  .lside .fields .v{font-size:1.3em}
+  .lside .facts li{font-size:1.25em}
+  .lcenter{display:flex;align-items:center;justify-content:center;font-size:2.6em;font-weight:900;color:var(--accent)}
+  .lbignum{font-size:4.4em;font-weight:900;color:var(--accent);line-height:.9}
+
+  /* modal */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+  .modal.open{display:flex}
+  .sheet{background:var(--panel);border:1px solid var(--line);border-radius:16px;width:min(720px,100%);max-height:90vh;overflow:auto;padding:22px 24px}
+  .sheet h2{margin:0 0 14px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  label{display:block;font-size:.78em;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:800;margin:12px 0 5px}
+  input[type=text],input[type=date],input[type=time],textarea,select{
+    width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--text);
+    padding:10px 12px;font-size:1em;font-family:inherit;outline:0;
+  }
+  input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+  textarea{min-height:80px;resize:vertical}
+  .hint{color:var(--muted);font-size:.78em;margin-top:4px}
+  .swatches{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .sw{width:30px;height:30px;border-radius:7px;cursor:pointer;border:2px solid transparent}
+  .sw.sel{border-color:#fff}
+  .fieldrows{display:flex;flex-direction:column;gap:8px}
+  .frow{display:flex;gap:8px;align-items:center}
+  .frow input{flex:1}
+  .frow .x{background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--warn);cursor:pointer;padding:8px 11px;font-weight:800}
+  .rowbtns{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .modal-actions{display:flex;justify-content:space-between;gap:10px;margin-top:22px}
+  .danger{color:var(--warn);background:transparent;border:1px solid var(--warn)}
+
+  /* print */
+  #printArea{display:none}
+  @media print{
+    body *{visibility:hidden}
+    #printArea,#printArea *{visibility:visible}
+    #printArea{display:block;position:absolute;inset:0;padding:0;color:#000;background:#fff}
+    .pcard{border:1px solid #000;border-radius:8px;padding:8px 10px;margin-bottom:8px;break-inside:avoid}
+    .pcard h3{margin:0 0 4px}
+    .pcard .pph{font-style:italic;color:#333}
+    .pcard ul{margin:6px 0 0 18px}
+    .ptitle{font-size:20px;font-weight:900;margin-bottom:12px}
+  }
+
+  /* tags + paste + logs */
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .tag{background:rgba(122,162,255,.16);border:1px solid #3a4664;color:#aebfec;border-radius:999px;padding:3px 10px;font-size:.8em;font-weight:700;cursor:pointer}
+  .tag:hover{border-color:#7aa2ff}
+  .pasteblock{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:12px}
+  .pasteblock summary{cursor:pointer;font-weight:700;color:var(--accent2)}
+  .pasteblock textarea{margin-top:10px;min-height:90px}
+  #recBtn.rec{color:#fff;background:var(--rec);border-color:var(--rec)}
+  .logsec{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:18px}
+  .logsec h3{margin:0 0 12px;font-size:.85em;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted)}
+  .phrase{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 12px;margin-bottom:6px}
+  .phrase .txt{flex:1;font-weight:700}
+  .phrase .cnt{font-weight:900;color:var(--accent);min-width:34px;text-align:center;font-size:1.2em}
+  .phrase.hot{border-color:var(--warn)}
+  .phrase.hot .cnt{color:var(--warn)}
+  .logitem{border-left:3px solid var(--accent2);background:var(--panel2);border-radius:8px;padding:10px 12px;margin-bottom:8px}
+  .logitem .lmeta{color:var(--muted);font-size:.78em;font-weight:700;margin-bottom:4px}
+  .inlineform{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .inlineform input,.inlineform select{flex:1;min-width:120px}
+  @media(max-width:860px){.mcols,.lcols{grid-template-columns:1fr;overflow:auto}.mcenter,.lcenter{border:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}}
+  @media(max-width:760px){
+    main{grid-template-columns:1fr}
+    .list,.mlist{display:none;border-right:0;border-bottom:1px solid var(--line)}
+    body.showlist .list,body.showlist .mlist{display:block;position:absolute;inset:0;top:0;z-index:20;background:var(--bg)}
+    .vsgrid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><span class="dot"></span>SPOTTER BOARD <small>v5</small></div>
+  <div class="tabs">
+    <button id="tabBoard" class="on" onclick="setView('board')">Tavla</button>
+    <button id="tabMatches" onclick="setView('matches')">Matcher</button>
+    <button id="tabLogs" onclick="setView('logs')">Logg</button>
+  </div>
+  <div class="search" id="searchWrap">
+    <span style="color:var(--muted)">⌕</span>
+    <input id="q" type="text" placeholder="Sök spelare, lag, nyckelord…" autocomplete="off">
+    <kbd>/</kbd>
+  </div>
+  <div class="tools">
+    <div class="fs"><button id="fsm" title="Mindre text">A-</button><button id="fsp" title="Större text">A+</button></div>
+    <button class="btn" id="favBtn" title="Visa bara favoriter">☆</button>
+    <button class="btn" id="matchBtn" title="Match-läge">⚔ Match</button>
+    <button class="btn" id="printBtn" title="Skriv ut / PDF">⎙ Skriv ut</button>
+    <button class="btn" id="exportBtn">Export</button>
+    <button class="btn" id="importBtn">Import</button>
+    <button class="btn primary" id="addBtn">+ Lägg till</button>
+    <input type="file" id="importFile" accept="application/json" hidden>
+  </div>
+</header>
+
+<div class="sports" id="sports"></div>
+<div class="count" id="count"></div>
+
+<main id="boardMain">
+  <div class="list" id="list"></div>
+  <div class="detail" id="detail"></div>
+</main>
+
+<main id="matchesMain" style="display:none">
+  <div class="mlist" id="mlist"></div>
+  <div class="matchdetail" id="matchdetail"></div>
+</main>
+
+<main id="logsMain" style="display:none;grid-template-columns:1fr">
+  <div id="logsInner" style="overflow:auto;padding:24px 28px;max-width:900px;width:100%;margin:0 auto"></div>
+</main>
+
+<!-- Match mode -->
+<div class="matchview" id="matchview">
+  <div class="mtop">
+    <div class="ttl"><b>⚔ MATCH-LÄGE</b></div>
+    <div style="flex:1"></div>
+    <button class="btn" onclick="swapSides()">⇄ Byt sida</button>
+    <button class="btn" onclick="openLiveFromMatchMode()">▶ Live-läge</button>
+    <button class="btn primary" onclick="closeMatchView()">Stäng</button>
+  </div>
+  <div class="mcols" id="mcols"></div>
+</div>
+
+<!-- Live mode -->
+<div class="liveview" id="liveview">
+  <div class="mtop">
+    <div class="ttl"><b style="color:var(--rec)">● LIVE</b> <span id="liveLabel" style="color:var(--muted)"></span></div>
+    <div style="flex:1"></div>
+    <div class="fs"><button onclick="setFs(-.1)">A-</button><button onclick="setFs(.1)">A+</button></div>
+    <button class="btn primary" onclick="closeLive()">Stäng</button>
+  </div>
+  <div class="lcols" id="lcols"></div>
+</div>
+
+<!-- Entry modal -->
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h2 id="modalTitle">Lägg till</h2>
+    <details class="pasteblock">
+      <summary>📋 Klistra in text och tolka (v6)</summary>
+      <textarea id="f_paste" placeholder="Klistra in en bio eller artikel, så plockar appen ut fakta, nuggets och nyckeltal…"></textarea>
+      <div class="rowbtns"><button type="button" class="btn" onclick="parsePaste()">Tolka texten</button></div>
+      <div class="hint">Enkel regelbaserad tolkning. Granska alltid resultatet innan du sparar.</div>
+    </details>
+    <div class="grid2">
+      <div><label>Namn</label><input type="text" id="f_name" placeholder="t.ex. Anna Karlsson"></div>
+      <div><label>Uttal (fonetiskt)</label><input type="text" id="f_phon" placeholder="AHN-na KAARL-son"></div>
+    </div>
+    <div class="rowbtns">
+      <button type="button" class="btn ghost" onclick="lookupPron()">🔎 Slå upp uttal</button>
+      <button type="button" class="btn ghost" id="recBtn" onclick="toggleRec()">● Spela in uttal</button>
+      <button type="button" class="btn ghost" id="playRecBtn" onclick="playEditAudio()" style="display:none">► Spela upp</button>
+      <span id="recStatus" class="hint"></span>
+    </div>
+    <div class="grid2">
+      <div><label>Sport</label><input type="text" id="f_sport" placeholder="Beachvolley" list="sportlist"><datalist id="sportlist"></datalist></div>
+      <div><label>Lag / nation</label><input type="text" id="f_team" placeholder="Sverige"></div>
+    </div>
+    <div class="grid2">
+      <div><label>Roll / position</label><input type="text" id="f_role" placeholder="Blockerare"></div>
+      <div><label>Nummer</label><input type="text" id="f_num" placeholder="7"></div>
+    </div>
+    <label>Rekord på spel (lyser i vyn)</label>
+    <input type="text" id="f_record" placeholder="1 seger från klubbrekordet">
+    <label>Taggar (komma-separerat)</label>
+    <input type="text" id="f_tags" placeholder="nykomling, skadad, jubileum">
+    <label>Lagfärg</label>
+    <div class="swatches" id="swatches"></div>
+    <label>Strukturerade fält (sport-mall)</label>
+    <div class="fieldrows" id="fieldRows"></div>
+    <div class="rowbtns">
+      <button type="button" class="btn ghost" onclick="addFieldRow('','')">+ Fält</button>
+      <button type="button" class="btn ghost" onclick="applyTemplate()">⬇ Hämta mall för sporten</button>
+    </div>
+    <label>Nyckelfakta (en per rad)</label>
+    <textarea id="f_facts" placeholder="183 cm, högerhänt&#10;OS-debut 2024"></textarea>
+    <label>Storylines / nuggets (en per rad)</label>
+    <textarea id="f_nuggets" placeholder="2 segrar i rad mot rivalen&#10;Tillbaka efter knäskada"></textarea>
+    <label>Statistik (fritext)</label>
+    <textarea id="f_stats" placeholder="Säsong: 24 matcher, 18 vinster"></textarea>
+    <div class="modal-actions">
+      <button class="btn danger" id="deleteBtn">Ta bort</button>
+      <div style="display:flex;gap:10px"><button class="btn" id="cancelBtn">Avbryt</button><button class="btn primary" id="saveBtn">Spara</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Match modal -->
+<div class="modal" id="mmodal">
+  <div class="sheet">
+    <h2 id="mmodalTitle">Ny match</h2>
+    <div class="grid2">
+      <div><label>Datum</label><input type="date" id="m_date"></div>
+      <div><label>Tid</label><input type="time" id="m_time"></div>
+    </div>
+    <label>Sport</label>
+    <input type="text" id="m_sport" placeholder="Beachvolley" list="sportlist2"><datalist id="sportlist2"></datalist>
+    <div class="grid2">
+      <div><label>Sida A (välj spelare/lag)</label><select id="m_a"></select><input type="text" id="m_aName" placeholder="…eller skriv fritt namn" style="margin-top:6px"></div>
+      <div><label>Sida B</label><select id="m_b"></select><input type="text" id="m_bName" placeholder="…eller skriv fritt namn" style="margin-top:6px"></div>
+    </div>
+    <div class="grid2">
+      <div><label>Arena</label><input type="text" id="m_venue" placeholder="Eriksdalsbadet"></div>
+      <div><label>Väder / förhållanden</label><input type="text" id="m_weather" placeholder="18°, byig vind"></div>
+    </div>
+    <label>Anteckning</label>
+    <textarea id="m_note" placeholder="Vinnaren går till final…"></textarea>
+    <div class="modal-actions">
+      <button class="btn danger" id="mDeleteBtn">Ta bort</button>
+      <div style="display:flex;gap:10px"><button class="btn" id="mCancelBtn">Avbryt</button><button class="btn primary" id="mSaveBtn">Spara</button></div>
+    </div>
+  </div>
+</div>
+
+<div id="printArea"></div>
+
+<script>
+const COLORS=["#ffd23f","#3ad0c8","#ff7a59","#46c97a","#7aa2ff","#c77dff","#ff5d8f","#9aa3ad"];
+const STORE="spotterboard.v1";
+const MSTORE="spotterboard.matches";
+const LSTORE="spotterboard.logs";
+const TEMPLATES={
+  "Beachvolley":["Längd","Hand","Sida","Block/set","Ess/set"],
+  "Tennis":["Hand","Bästa underlag","Ess/match","Förstaserve %","Ranking"],
+  "Ishockey":["Position","Fattning","Mål","Assist","Tekning %"],
+  "Fotboll":["Position","Fot","Mål","Assist","Löpsträcka"],
+  "Friidrott":["Gren","Personbästa","Säsongsbästa","Senaste"],
+  "Standard":["Nyckeltal 1","Nyckeltal 2","Nyckeltal 3"]
+};
+const CHECK=[["uttal","Uttal kollat"],["fakta","Fakta klara"],["h2h","Head-to-head klart"],["rekord","Rekord noterade"],["arena","Väder och arena kollat"]];
+let state={view:"board",entries:[],matches:[],logs:[],phrases:[],sport:"Alla",sel:null,q:"",favOnly:false,matchA:null,matchB:null,selMatch:null};
+let editId=null, editColor=COLORS[0], mEditId=null;
+let editAudio=null, mediaRec=null, recChunks=[];
+let PRON={};
+try{PRON=JSON.parse(localStorage.getItem("spotterboard.pron"))||{}}catch(e){}
+function savePron(){localStorage.setItem("spotterboard.pron",JSON.stringify(PRON))}
+
+function uid(){return Math.random().toString(36).slice(2,9)}
+function todayStr(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function load(){
+  try{const r=JSON.parse(localStorage.getItem(STORE));if(r&&r.entries)state.entries=r.entries;}catch(e){}
+  try{const m=JSON.parse(localStorage.getItem(MSTORE));if(m&&m.matches)state.matches=m.matches;}catch(e){}
+  try{const l=JSON.parse(localStorage.getItem(LSTORE));if(l){state.logs=l.logs||[];state.phrases=l.phrases||[]}}catch(e){}
+  if(!state.entries.length)state.entries=SAMPLE();
+  if(!state.matches.length)state.matches=SAMPLEMATCHES();
+}
+function save(){localStorage.setItem(STORE,JSON.stringify({entries:state.entries}));localStorage.setItem(MSTORE,JSON.stringify({matches:state.matches}));localStorage.setItem(LSTORE,JSON.stringify({logs:state.logs,phrases:state.phrases}))}
+
+function SAMPLE(){
+  return [
+    {id:"s1",name:"Anna Lindqvist",phon:"AHN-na LIND-kvist",sport:"Beachvolley",team:"Sverige",role:"Blockerare",num:"1",color:"#ffd23f",
+     record:"1 seger från SM-rekordet i block",
+     fields:[{label:"Längd",value:"186 cm"},{label:"Hand",value:"Höger"},{label:"Block/set",value:"2,4"}],
+     facts:["OS-spel 2024","Världsranking topp 20"],nuggets:["Vunnit 3 raka set mot Norge","Tillbaka efter axelskada i vår"],
+     stats:"Säsong: 22 matcher / 16 vinster"},
+    {id:"s2",name:"Maja Ek",phon:"MAJ-a EHK",sport:"Beachvolley",team:"Sverige",role:"Försvarare",num:"2",color:"#ffd23f",
+     fields:[{label:"Längd",value:"172 cm"},{label:"Ess/set",value:"0,8"}],
+     facts:["Spelar med Anna sedan 2023","Bäst i landet på grävförsvar"],nuggets:["Aldrig förlorat ett tredjeset i år","Firar 100:e landskampen idag"],
+     stats:"Dig per set: 5,1"},
+    {id:"s3",name:"Loïc Müller",phon:"loo-EEK MUEL-ler",sport:"Tennis",team:"Schweiz",role:"Singel",num:"",color:"#ff7a59",
+     fields:[{label:"Hand",value:"Vänster"},{label:"Bästa underlag",value:"Gräs"},{label:"Ess/match",value:"9,4"}],
+     facts:["Stark förstaserve"],nuggets:["Obesegrad på hemmaplan i 11 matcher","Möter sin barndomsrival i nästa rond"],stats:"Förstaserve in: 68%"},
+    {id:"s4",name:"Erik Johansson",phon:"EH-rik yo-HAN-son",sport:"Ishockey",team:"Sverige",role:"Center",num:"19",color:"#7aa2ff",
+     record:"1 poäng från klubbrekordet i assist",
+     fields:[{label:"Position",value:"Center"},{label:"Fattning",value:"Vänster"},{label:"Mål",value:"18"},{label:"Assist",value:"31"}],
+     facts:["Lagkapten","Tre raka säsonger över 50 poäng"],nuggets:["Spelar sin 500:e match"],stats:"Tekningar vunna: 54%"}
+  ];
+}
+function SAMPLEMATCHES(){
+  const t=todayStr();
+  return [
+    {id:"m1",date:t,time:"18:00",sport:"Beachvolley",aId:"s1",bId:"s3",aName:"",bName:"",venue:"Eriksdalsbadet",weather:"Inomhus",note:"Vinnaren går till semifinal",done:false,check:{}},
+    {id:"m2",date:t,time:"20:30",sport:"Ishockey",aId:"s4",bId:"",aName:"",bName:"Finland",venue:"Avicii Arena",weather:"Inomhus",note:"",done:false,check:{}}
+  ];
+}
+
+/* ---------- helpers ---------- */
+function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function jsesc(s){return String(s).replace(/['\\]/g,"\\$&")}
+function speak(name){try{const u=new SpeechSynthesisUtterance(name);u.lang="sv-SE";u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
+function toggleFav(id){const e=state.entries.find(x=>x.id===id);if(e){e.fav=!e.fav;render()}}
+function entry(id){return state.entries.find(x=>x.id===id)}
+function section(title,arr,cls){arr=(arr||[]).filter(Boolean);if(!arr.length)return "";return `<div class="sec"><h3>${title}</h3><ul class="${cls}">${arr.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`}
+function fieldsHTML(fields){fields=(fields||[]).filter(f=>f&&(f.value||f.label));if(!fields.length)return "";return `<div class="sec"><h3>Nyckeltal</h3><div class="fields">${fields.map(f=>`<div class="f"><div class="l">${esc(f.label)}</div><div class="v">${esc(f.value)}</div></div>`).join("")}</div></div>`}
+
+/* ---------- board render ---------- */
+function sportsList(){const set=new Set(state.entries.map(e=>e.sport).filter(Boolean));return ["Alla",...[...set].sort()]}
+function renderSports(){
+  const el=document.getElementById("sports");el.innerHTML="";
+  sportsList().forEach(s=>{const c=document.createElement("div");c.className="chip"+(state.sport===s?" active":"");c.textContent=s;c.onclick=()=>{state.sport=s;render()};el.appendChild(c)});
+  const opts=[...new Set(state.entries.map(e=>e.sport).filter(Boolean))].map(s=>`<option value="${esc(s)}">`).join("");
+  document.getElementById("sportlist").innerHTML=opts;document.getElementById("sportlist2").innerHTML=opts;
+}
+function matches(e){
+  if(state.favOnly&&!e.fav)return false;
+  if(state.sport!=="Alla"&&e.sport!==state.sport)return false;
+  const q=state.q.trim().toLowerCase();if(!q)return true;
+  const tags=(e.tags||[]).map(t=>t.toLowerCase());
+  const fields=(e.fields||[]).map(f=>f.label+" "+f.value).join(" ");
+  const hay=[e.name,e.phon,e.team,e.role,e.num,e.sport,e.record,tags.join(" "),fields,(e.facts||[]).join(" "),(e.nuggets||[]).join(" "),e.stats].join(" ").toLowerCase();
+  return q.split(/\s+/).every(w=>{
+    if(w.startsWith("#"))return tags.some(t=>t.includes(w.slice(1)));
+    if(w.startsWith("sport:"))return (e.sport||"").toLowerCase().includes(w.slice(6));
+    if(w.startsWith("lag:")||w.startsWith("team:"))return (e.team||"").toLowerCase().includes(w.split(":")[1]||"");
+    return hay.includes(w);
+  });
+}
+function renderList(){
+  const list=document.getElementById("list");
+  const items=state.entries.filter(matches).sort((a,b)=>a.name.localeCompare(b.name,"sv"));
+  list.innerHTML="";
+  document.getElementById("count").textContent=items.length+" av "+state.entries.length+" poster";
+  items.forEach(e=>{
+    const d=document.createElement("div");
+    d.className="card"+(state.sel===e.id?" sel":"")+(e.fav?" isfav":"");
+    d.onclick=()=>{state.sel=e.id;document.body.classList.remove("showlist");render()};
+    d.innerHTML=`<div class="stripe" style="background:${e.color||'#444'}"></div>
+      ${e.num?`<div class="num">${esc(e.num)}</div>`:`<div class="num" style="color:var(--muted)">·</div>`}
+      <div class="who"><div class="nm">${esc(e.name)}</div>${e.phon?`<div class="ph">${esc(e.phon)}</div>`:""}<div class="tm">${esc([e.team,e.role].filter(Boolean).join(" · "))}</div></div>
+      <div class="fav">★</div>`;
+    list.appendChild(d);
+  });
+  if(!items.length)list.innerHTML=`<div style="color:var(--muted);padding:20px;text-align:center">Inga träffar.</div>`;
+}
+function renderDetail(){
+  const el=document.getElementById("detail");
+  const e=entry(state.sel);
+  if(!e){el.innerHTML=`<div class="empty"><div style="font-size:2.4em">🎙️</div><div>Välj någon i listan, eller lägg till din första spelare.</div><div style="font-size:.85em">Tips: <kbd>/</kbd> söker, <kbd>a</kbd> lägger till, <kbd>m</kbd> match.</div></div>`;return}
+  el.innerHTML=`
+    ${e.record?`<div class="recbanner">🏆 ${esc(e.record)}</div>`:""}
+    <div class="dh">
+      ${e.num?`<div class="bignum">${esc(e.num)}</div>`:""}
+      <div style="flex:1;min-width:0">
+        <h1>${esc(e.name)} <span class="speak" style="cursor:pointer" onclick="toggleFav('${e.id}')">${e.fav?"★ favorit":"☆ favorit"}</span></h1>
+        ${e.phon||e.phonAudio?`<div class="ph">${e.phon?esc(e.phon):""} <button class="speak" onclick="speak('${jsesc(e.name)}')">► datorröst</button>${e.phonAudio?` <button class="speak" onclick="playAudio('${e.id}')">► din inspelning</button>`:""}</div>`:""}
+        <div class="meta">${esc([e.sport,e.team,e.role].filter(Boolean).join("  ·  "))}</div>
+      </div>
+      <div style="width:14px;height:60px;border-radius:5px;background:${e.color||'#444'}"></div>
+    </div>
+    ${fieldsHTML(e.fields)}
+    ${section("Nyckelfakta",e.facts,"facts")}
+    ${section("Storylines & nuggets",e.nuggets,"facts nuggets")}
+    ${e.stats?`<div class="sec"><h3>Statistik</h3><div class="statbox">${esc(e.stats)}</div></div>`:""}
+    ${(e.tags||[]).length?`<div class="sec"><h3>Taggar</h3><div class="tags">${(e.tags||[]).map(t=>`<span class="tag" onclick="filterByTag('${jsesc(t)}')">#${esc(t)}</span>`).join("")}</div></div>`:""}
+    <div class="editrow">
+      <button class="btn" onclick="openEdit('${e.id}')">Redigera</button>
+      <button class="btn" onclick="setSide('A','${e.id}');openMatchView()">→ Match vänster</button>
+      <button class="btn" onclick="setSide('B','${e.id}');openMatchView()">→ Match höger</button>
+    </div>`;
+}
+
+/* ---------- matches view (v4) ---------- */
+function renderMatches(){
+  const el=document.getElementById("mlist");
+  const t=todayStr();
+  const sorted=[...state.matches].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  const today=sorted.filter(m=>m.date===t);
+  const upcoming=sorted.filter(m=>m.date>t);
+  const past=sorted.filter(m=>m.date<t).reverse();
+  function grp(title,arr,cls){
+    if(!arr.length)return "";
+    return `<div class="daygroup ${cls||''}"><h4>${title}</h4>${arr.map(rowHTML).join("")}</div>`;
+  }
+  function rowHTML(m){
+    const a=sideName(m,"a"),b=sideName(m,"b");
+    return `<div class="mrow ${state.selMatch===m.id?'sel':''} ${m.done?'done':''}" onclick="selectMatch('${m.id}')">
+      <div class="time">${esc(m.time||"")}</div>
+      <div class="vs"><div class="t">${esc(a)} <span style="color:var(--muted)">vs</span> ${esc(b)}</div><div class="s">${esc([m.sport,m.venue].filter(Boolean).join(" · "))}</div></div>
+    </div>`;
+  }
+  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-weight:900">Matcher</div><button class="btn primary" onclick="openMatchModal()">+ Match</button></div>`
+    +grp("Idag",today,"today")+grp("Kommande",upcoming)+grp("Spelade",past)
+    +(state.matches.length?"":`<div style="color:var(--muted);padding:20px;text-align:center">Inga matcher än.</div>`);
+  renderMatchDetail();
+}
+function sideName(m,side){
+  const id=m[side+"Id"],nm=m[side+"Name"];
+  if(id){const e=entry(id);if(e)return e.name}
+  return nm||"?";
+}
+function selectMatch(id){state.selMatch=id;renderMatches()}
+function renderMatchDetail(){
+  const el=document.getElementById("matchdetail");
+  const m=state.matches.find(x=>x.id===state.selMatch);
+  if(!m){el.innerHTML=`<div class="empty"><div style="font-size:2.2em">📅</div><div>Välj en match, eller skapa en ny.</div></div>`;return}
+  const ea=m.aId?entry(m.aId):null, eb=m.bId?entry(m.bId):null;
+  const chk=m.check||{};
+  el.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+      <div><div style="font-size:1.6em;font-weight:900">${esc(sideName(m,"a"))} <span style="color:var(--accent)">vs</span> ${esc(sideName(m,"b"))}</div>
+      <div class="infoline"><span><b>${esc(m.date)}</b> ${esc(m.time||"")}</span>${m.sport?`<span>${esc(m.sport)}</span>`:""}${m.venue?`<span>📍 <b>${esc(m.venue)}</b></span>`:""}${m.weather?`<span>🌤 ${esc(m.weather)}</span>`:""}</div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn primary" onclick="openMatchFromCard('${m.id}')">⚔ Match-läge</button>
+        <button class="btn" onclick="openLiveFromCard('${m.id}')">▶ Live</button>
+        <button class="btn" onclick="printMatch('${m.id}')">⎙ Skriv ut</button>
+      </div>
+    </div>
+    ${m.note?`<div class="recbanner" style="background:rgba(58,208,200,.12);border-color:var(--accent2);color:#9ff0ea">📝 ${esc(m.note)}</div>`:""}
+    <div class="vsgrid" style="margin-top:14px">
+      <div>${matchSideCard(m,"a",ea)}</div>
+      <div class="vsmid">VS</div>
+      <div>${matchSideCard(m,"b",eb)}</div>
+    </div>
+    <div class="sec"><h3>Klar för sändning</h3><div class="checklist">
+      ${CHECK.map(([k,lbl])=>`<label><input type="checkbox" ${chk[k]?"checked":""} onchange="toggleCheck('${m.id}','${k}',this.checked)"> ${lbl}</label>`).join("")}
+    </div></div>
+    <div class="editrow">
+      <button class="btn" onclick="openMatchModal('${m.id}')">Redigera match</button>
+      <button class="btn" onclick="toggleDone('${m.id}')">${m.done?"Markera ospelad":"Markera spelad"}</button>
+    </div>`;
+}
+function matchSideCard(m,side,e){
+  const nm=sideName(m,side);
+  if(!e)return `<div class="statbox"><div style="font-size:1.2em;font-weight:800">${esc(nm)}</div><div style="color:var(--muted);font-size:.9em;margin-top:6px">Ingen kopplad post. Lägg till spelaren på Tavlan för fakta och uttal.</div></div>`;
+  return `<div>
+    ${e.record?`<div class="recbanner">🏆 ${esc(e.record)}</div>`:""}
+    <div style="font-size:1.4em;font-weight:900">${e.num?esc(e.num)+" ":""}${esc(e.name)}</div>
+    ${e.phon?`<div class="ph" style="font-size:1.05em">${esc(e.phon)} <button class="speak" onclick="speak('${jsesc(e.name)}')">►</button></div>`:""}
+    <div class="meta" style="margin-top:4px">${esc([e.team,e.role].filter(Boolean).join(" · "))}</div>
+    ${fieldsHTML(e.fields)}
+    ${section("Nuggets",e.nuggets,"facts nuggets")}
+  </div>`;
+}
+function toggleCheck(id,k,v){const m=state.matches.find(x=>x.id===id);if(m){m.check=m.check||{};m.check[k]=v;save()}}
+function toggleDone(id){const m=state.matches.find(x=>x.id===id);if(m){m.done=!m.done;renderMatches();save()}}
+
+/* ---------- match mode (v2) ---------- */
+let H2H={};
+try{H2H=JSON.parse(localStorage.getItem("spotterboard.h2h"))||{}}catch(e){}
+function saveH2H(){localStorage.setItem("spotterboard.h2h",JSON.stringify(H2H))}
+function h2hKey(a,b){return [a,b].sort().join("__")}
+function persistMatch(){localStorage.setItem("spotterboard.match",JSON.stringify({a:state.matchA,b:state.matchB}))}
+function openMatchView(){
+  if(state.matchA&&!entry(state.matchA))state.matchA=null;
+  if(state.matchB&&!entry(state.matchB))state.matchB=null;
+  document.getElementById("matchview").classList.add("open");renderMatchMode();
+}
+function closeMatchView(){document.getElementById("matchview").classList.remove("open")}
+function setSide(side,id){if(side==="A")state.matchA=id;else state.matchB=id;persistMatch();if(document.getElementById("matchview").classList.contains("open"))renderMatchMode()}
+function swapSides(){const t=state.matchA;state.matchA=state.matchB;state.matchB=t;persistMatch();renderMatchMode()}
+function openMatchFromCard(id){const m=state.matches.find(x=>x.id===id);if(!m)return;state.matchA=m.aId||null;state.matchB=m.bId||null;persistMatch();openMatchView()}
+function optionsHTML(sel){const arr=[...state.entries].sort((a,b)=>a.name.localeCompare(b.name,"sv"));return '<option value="">Välj…</option>'+arr.map(e=>`<option value="${e.id}" ${e.id===sel?"selected":""}>${esc(e.name)}${e.team?" ("+esc(e.team)+")":""}</option>`).join("")}
+function sideHTML(side,id){
+  const e=entry(id);
+  const picker=`<select class="mpick" onchange="setSide('${side}',this.value)">${optionsHTML(id)}</select>`;
+  if(!e)return `<div class="mside">${picker}<div class="empty" style="height:55%">Välj ${side==='A'?'vänster':'höger'} sida</div></div>`;
+  return `<div class="mside">
+    ${picker}
+    ${e.record?`<div class="recbanner" style="margin-top:14px">🏆 ${esc(e.record)}</div>`:""}
+    <div class="dh" style="margin-top:14px">
+      ${e.num?`<div class="bignum">${esc(e.num)}</div>`:""}
+      <div style="flex:1;min-width:0"><h1>${esc(e.name)}</h1>${e.phon?`<div class="ph">${esc(e.phon)} <button class="speak" onclick="speak('${jsesc(e.name)}')">►</button></div>`:""}<div class="meta">${esc([e.team,e.role].filter(Boolean).join("  ·  "))}</div></div>
+      <div style="width:12px;height:54px;border-radius:5px;background:${e.color||'#444'}"></div>
+    </div>
+    ${fieldsHTML(e.fields)}
+    ${section("Nyckelfakta",e.facts,"facts")}
+    ${section("Storylines & nuggets",e.nuggets,"facts nuggets")}
+    ${e.stats?`<div class="sec"><h3>Statistik</h3><div class="statbox">${esc(e.stats)}</div></div>`:""}
+  </div>`;
+}
+function renderMatchMode(){
+  const wrap=document.getElementById("mcols");
+  const a=state.matchA,b=state.matchB;
+  const note=(a&&b)?(H2H[h2hKey(a,b)]||""):"";
+  wrap.innerHTML=sideHTML("A",a)+
+    `<div class="mcenter"><div class="vsbig">VS</div>
+       <h3 style="font-size:.78em;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Head-to-head</h3>
+       <textarea id="h2hNote" ${(!a||!b)?"disabled":""} placeholder="${(a&&b)?'Inbördes möten, senaste resultat, vad som står på spel…':'Välj båda sidor först'}" style="flex:1;min-height:140px">${esc(note)}</textarea></div>`+
+    sideHTML("B",b);
+  const ta=document.getElementById("h2hNote");
+  if(ta&&a&&b)ta.addEventListener("input",()=>{H2H[h2hKey(a,b)]=ta.value;saveH2H()});
+}
+
+/* ---------- live view (v5) ---------- */
+function openLive(aId,bId,label){
+  state.matchA=aId||state.matchA;state.matchB=bId||state.matchB;
+  document.getElementById("liveLabel").textContent=label||"";
+  document.getElementById("liveview").classList.add("open");renderLive();
+}
+function openLiveFromCard(id){const m=state.matches.find(x=>x.id===id);if(!m)return;openLive(m.aId,m.bId,sideName(m,"a")+" vs "+sideName(m,"b"))}
+function openLiveFromMatchMode(){openLive(state.matchA,state.matchB,"")}
+function closeLive(){document.getElementById("liveview").classList.remove("open")}
+function liveSide(id){
+  const e=entry(id);
+  if(!e)return `<div class="lside"><div class="empty">Ingen kopplad post</div></div>`;
+  return `<div class="lside">
+    ${e.record?`<div class="recbanner" style="font-size:1.1em">🏆 ${esc(e.record)}</div>`:""}
+    <div style="display:flex;align-items:flex-start;gap:18px">
+      ${e.num?`<div class="lbignum">${esc(e.num)}</div>`:""}
+      <div><h1>${esc(e.name)}</h1>${e.phon?`<div class="lph">${esc(e.phon)} <button class="speak" onclick="speak('${jsesc(e.name)}')">►</button></div>`:""}<div class="lmeta">${esc([e.team,e.role].filter(Boolean).join("  ·  "))}</div></div>
+    </div>
+    ${fieldsHTML(e.fields)}
+    ${section("Nuggets",e.nuggets,"facts nuggets")}
+  </div>`;
+}
+function renderLive(){document.getElementById("lcols").innerHTML=liveSide(state.matchA)+`<div class="lcenter">VS</div>`+liveSide(state.matchB)}
+
+/* ---------- entry modal ---------- */
+function buildSwatches(){const w=document.getElementById("swatches");w.innerHTML="";COLORS.forEach(c=>{const s=document.createElement("div");s.className="sw"+(c===editColor?" sel":"");s.style.background=c;s.onclick=()=>{editColor=c;buildSwatches()};w.appendChild(s)})}
+function addFieldRow(label,value){
+  const wrap=document.getElementById("fieldRows");
+  const row=document.createElement("div");row.className="frow";
+  row.innerHTML=`<input type="text" class="flabel" placeholder="Etikett" value="${esc(label||"")}"><input type="text" class="fvalue" placeholder="Värde" value="${esc(value||"")}"><button type="button" class="x" title="Ta bort fält">✕</button>`;
+  row.querySelector(".x").onclick=()=>row.remove();
+  wrap.appendChild(row);
+}
+function applyTemplate(){
+  const sport=document.getElementById("f_sport").value.trim();
+  const tpl=TEMPLATES[sport]||TEMPLATES["Standard"];
+  const existing=[...document.querySelectorAll("#fieldRows .flabel")].map(i=>i.value.trim().toLowerCase());
+  tpl.forEach(lbl=>{if(!existing.includes(lbl.toLowerCase()))addFieldRow(lbl,"")});
+}
+function collectFields(){
+  return [...document.querySelectorAll("#fieldRows .frow")].map(r=>({label:r.querySelector(".flabel").value.trim(),value:r.querySelector(".fvalue").value.trim()})).filter(f=>f.label||f.value);
+}
+function openAdd(){
+  editId=null;editColor=COLORS[0];
+  document.getElementById("modalTitle").textContent="Lägg till";
+  ["name","phon","sport","team","role","num","record","tags","facts","nuggets","stats","paste"].forEach(k=>document.getElementById("f_"+k).value="");
+  if(state.sport!=="Alla")document.getElementById("f_sport").value=state.sport;
+  editAudio=null;updateRecUI();
+  document.getElementById("fieldRows").innerHTML="";
+  document.getElementById("deleteBtn").style.display="none";
+  buildSwatches();openModal("modal");setTimeout(()=>document.getElementById("f_name").focus(),50);
+}
+function openEdit(id){
+  const e=entry(id);if(!e)return;
+  editId=id;editColor=e.color||COLORS[0];
+  document.getElementById("modalTitle").textContent="Redigera";
+  document.getElementById("f_name").value=e.name||"";document.getElementById("f_phon").value=e.phon||"";
+  document.getElementById("f_sport").value=e.sport||"";document.getElementById("f_team").value=e.team||"";
+  document.getElementById("f_role").value=e.role||"";document.getElementById("f_num").value=e.num||"";
+  document.getElementById("f_record").value=e.record||"";
+  document.getElementById("f_tags").value=(e.tags||[]).join(", ");
+  document.getElementById("f_paste").value="";
+  editAudio=e.phonAudio||null;updateRecUI();
+  document.getElementById("f_facts").value=(e.facts||[]).join("\n");
+  document.getElementById("f_nuggets").value=(e.nuggets||[]).join("\n");
+  document.getElementById("f_stats").value=e.stats||"";
+  document.getElementById("fieldRows").innerHTML="";(e.fields||[]).forEach(f=>addFieldRow(f.label,f.value));
+  document.getElementById("deleteBtn").style.display="inline-block";
+  buildSwatches();openModal("modal");
+}
+function lines(id){return document.getElementById(id).value.split("\n").map(s=>s.trim()).filter(Boolean)}
+function saveEntry(){
+  const name=document.getElementById("f_name").value.trim();if(!name){document.getElementById("f_name").focus();return}
+  const tags=document.getElementById("f_tags").value.split(",").map(s=>s.trim()).filter(Boolean);
+  const data={name,phon:f("phon"),sport:f("sport"),team:f("team"),role:f("role"),num:f("num"),record:f("record"),tags,phonAudio:editAudio,color:editColor,fields:collectFields(),facts:lines("f_facts"),nuggets:lines("f_nuggets"),stats:f("stats")};
+  if(data.phon&&data.name){PRON[data.name.toLowerCase()]=data.phon;savePron()}
+  if(editId){Object.assign(entry(editId),data);state.sel=editId}
+  else{const e={id:uid(),...data};state.entries.push(e);state.sel=e.id}
+  closeModal("modal");render();
+}
+function f(k){return document.getElementById("f_"+k).value.trim()}
+function deleteEntry(){if(!editId)return;if(!confirm("Ta bort den här posten?"))return;state.entries=state.entries.filter(x=>x.id!==editId);if(state.sel===editId)state.sel=null;closeModal("modal");render()}
+
+/* ---------- match modal ---------- */
+function mOptions(sel){return '<option value="">Ingen</option>'+[...state.entries].sort((a,b)=>a.name.localeCompare(b.name,"sv")).map(e=>`<option value="${e.id}" ${e.id===sel?"selected":""}>${esc(e.name)}${e.team?" ("+esc(e.team)+")":""}</option>`).join("")}
+function openMatchModal(id){
+  mEditId=id||null;
+  const m=id?state.matches.find(x=>x.id===id):null;
+  document.getElementById("mmodalTitle").textContent=id?"Redigera match":"Ny match";
+  document.getElementById("m_date").value=m?m.date:todayStr();
+  document.getElementById("m_time").value=m?m.time:"";
+  document.getElementById("m_sport").value=m?m.sport:(state.sport!=="Alla"?state.sport:"");
+  document.getElementById("m_a").innerHTML=mOptions(m?m.aId:"");
+  document.getElementById("m_b").innerHTML=mOptions(m?m.bId:"");
+  document.getElementById("m_aName").value=m?m.aName||"":"";
+  document.getElementById("m_bName").value=m?m.bName||"":"";
+  document.getElementById("m_venue").value=m?m.venue||"":"";
+  document.getElementById("m_weather").value=m?m.weather||"":"";
+  document.getElementById("m_note").value=m?m.note||"":"";
+  document.getElementById("mDeleteBtn").style.display=id?"inline-block":"none";
+  openModal("mmodal");
+}
+function saveMatch(){
+  const data={
+    date:document.getElementById("m_date").value||todayStr(),
+    time:document.getElementById("m_time").value,
+    sport:document.getElementById("m_sport").value.trim(),
+    aId:document.getElementById("m_a").value,bId:document.getElementById("m_b").value,
+    aName:document.getElementById("m_aName").value.trim(),bName:document.getElementById("m_bName").value.trim(),
+    venue:document.getElementById("m_venue").value.trim(),weather:document.getElementById("m_weather").value.trim(),
+    note:document.getElementById("m_note").value.trim()
+  };
+  if(mEditId){Object.assign(state.matches.find(x=>x.id===mEditId),data);state.selMatch=mEditId}
+  else{const m={id:uid(),done:false,check:{},...data};state.matches.push(m);state.selMatch=m.id}
+  closeModal("mmodal");renderMatches();save();
+}
+function deleteMatch(){if(!mEditId)return;if(!confirm("Ta bort matchen?"))return;state.matches=state.matches.filter(x=>x.id!==mEditId);if(state.selMatch===mEditId)state.selMatch=null;closeModal("mmodal");renderMatches();save()}
+
+/* ---------- print (v5) ---------- */
+function printBoard(){
+  const items=state.entries.filter(matches).sort((a,b)=>a.name.localeCompare(b.name,"sv"));
+  const html=`<div class="ptitle">Spotter Board${state.sport!=="Alla"?", "+esc(state.sport):""}</div>`+
+    items.map(e=>`<div class="pcard"><h3>${e.num?esc(e.num)+" ":""}${esc(e.name)}${e.phon?` <span class="pph">(${esc(e.phon)})</span>`:""}</h3>
+      <div>${esc([e.team,e.role,e.sport].filter(Boolean).join(" · "))}</div>
+      ${e.record?`<div><b>Rekord på spel:</b> ${esc(e.record)}</div>`:""}
+      ${(e.fields||[]).length?`<div>${(e.fields||[]).map(x=>esc(x.label)+": "+esc(x.value)).join(" | ")}</div>`:""}
+      ${(e.facts||[]).length?`<ul>${(e.facts||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+      ${(e.nuggets||[]).length?`<ul>${(e.nuggets||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+    </div>`).join("");
+  doPrint(html);
+}
+function printMatch(id){
+  const m=state.matches.find(x=>x.id===id);if(!m)return;
+  function card(side){const e=entry(m[side+"Id"]);const nm=sideName(m,side);if(!e)return `<div class="pcard"><h3>${esc(nm)}</h3></div>`;
+    return `<div class="pcard"><h3>${e.num?esc(e.num)+" ":""}${esc(e.name)}${e.phon?` <span class="pph">(${esc(e.phon)})</span>`:""}</h3>
+      <div>${esc([e.team,e.role].filter(Boolean).join(" · "))}</div>
+      ${e.record?`<div><b>Rekord på spel:</b> ${esc(e.record)}</div>`:""}
+      ${(e.fields||[]).length?`<div>${(e.fields||[]).map(x=>esc(x.label)+": "+esc(x.value)).join(" | ")}</div>`:""}
+      ${(e.facts||[]).length?`<ul>${(e.facts||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+      ${(e.nuggets||[]).length?`<ul>${(e.nuggets||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}</div>`}
+  const html=`<div class="ptitle">${esc(sideName(m,"a"))} vs ${esc(sideName(m,"b"))}</div>
+    <div>${esc([m.date,m.time,m.sport,m.venue,m.weather].filter(Boolean).join(" · "))}</div>
+    ${m.note?`<div><b>Not:</b> ${esc(m.note)}</div>`:""}<br>${card("a")}${card("b")}`;
+  doPrint(html);
+}
+function doPrint(html){document.getElementById("printArea").innerHTML=html;window.print()}
+
+/* ---------- v6 paste parser ---------- */
+function parsePaste(){
+  const raw=document.getElementById("f_paste").value.trim();if(!raw)return;
+  const sentences=raw.replace(/\s+/g," ").split(/(?<=[.!?])\s+/).map(s=>s.trim()).filter(s=>s.length>3);
+  const nugWords=["rekord","vann","vinst","förlor","skada","comeback","debut"," i rad","obesegr","mästare","final","första","senaste","trend","svit","tillbaka","seger"];
+  const facts=[],nuggets=[];
+  sentences.forEach(s=>{const low=s.toLowerCase();(nugWords.some(w=>low.includes(w))?nuggets:facts).push(s)});
+  const h=raw.match(/(\d{2,3})\s?cm/i);
+  const born=raw.match(/(?:född|f\.|born)\D{0,6}((?:19|20)\d{2})/i);
+  const hand=/vänsterhänt|vänster/i.test(raw)?"Vänster":(/högerhänt|höger/i.test(raw)?"Höger":"");
+  if(h)addFieldRow("Längd",h[1]+" cm");
+  if(born)addFieldRow("Född",born[1]);
+  if(hand)addFieldRow("Hand",hand);
+  const fa=document.getElementById("f_facts");fa.value=[fa.value.trim(),...facts.slice(0,6)].filter(Boolean).join("\n");
+  const nu=document.getElementById("f_nuggets");nu.value=[nu.value.trim(),...nuggets.slice(0,6)].filter(Boolean).join("\n");
+  document.getElementById("f_paste").value="";
+  document.getElementById("recStatus").textContent="Tolkat: "+facts.length+" fakta, "+nuggets.length+" nuggets. Granska gärna.";
+}
+
+/* ---------- v7 pronunciation library + audio ---------- */
+function lookupPron(){
+  const nm=document.getElementById("f_name").value.trim().toLowerCase();
+  const s=document.getElementById("recStatus");
+  if(nm&&PRON[nm]){document.getElementById("f_phon").value=PRON[nm];s.textContent="Uttal hämtat ur biblioteket."}
+  else s.textContent="Inget sparat uttal för det namnet än.";
+}
+function updateRecUI(){
+  const p=document.getElementById("playRecBtn");if(p)p.style.display=editAudio?"inline-block":"none";
+  const b=document.getElementById("recBtn");if(b){b.classList.remove("rec");b.textContent="● Spela in uttal"}
+}
+async function toggleRec(){
+  const b=document.getElementById("recBtn");
+  if(mediaRec&&mediaRec.state==="recording"){mediaRec.stop();return}
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    mediaRec=new MediaRecorder(stream);recChunks=[];
+    mediaRec.ondataavailable=ev=>recChunks.push(ev.data);
+    mediaRec.onstop=()=>{const blob=new Blob(recChunks,{type:"audio/webm"});const fr=new FileReader();fr.onload=()=>{editAudio=fr.result;updateRecUI();document.getElementById("recStatus").textContent="Inspelning sparad."};fr.readAsDataURL(blob);stream.getTracks().forEach(t=>t.stop())};
+    mediaRec.start();b.classList.add("rec");b.textContent="■ Stoppa";document.getElementById("recStatus").textContent="Spelar in…";
+  }catch(e){document.getElementById("recStatus").textContent="Mikrofon nekad eller saknas."}
+}
+function playEditAudio(){if(editAudio)new Audio(editAudio).play()}
+function playAudio(id){const e=entry(id);if(e&&e.phonAudio)new Audio(e.phonAudio).play()}
+function filterByTag(t){setView('board');state.q="#"+t;document.getElementById("q").value="#"+t;renderList()}
+
+/* ---------- v8 log + phrase tracker ---------- */
+function renderLogs(){
+  const el=document.getElementById("logsInner");
+  const phrases=[...state.phrases].sort((a,b)=>b.count-a.count);
+  const logs=[...state.logs].sort((a,b)=>(b.date+(b.id||"")).localeCompare(a.date+(a.id||"")));
+  const tlabel={eval:"Självutvärdering",feedback:"Feedback",egen:"Notering"};
+  el.innerHTML=`
+    <div class="logsec">
+      <h3>Fras-spårare (undvik upprepningar)</h3>
+      <div class="inlineform">
+        <input type="text" id="newPhrase" placeholder="Fras du vill hålla koll på, t.ex. 'helt otroligt'">
+        <button class="btn primary" onclick="addPhrase()">Lägg till</button>
+      </div>
+      <div style="margin-top:12px">
+        ${phrases.length?phrases.map(p=>`<div class="phrase ${p.count>=3?'hot':''}"><span class="cnt">${p.count}</span><span class="txt">${esc(p.text)}</span><button class="btn" onclick="incPhrase('${p.id}',1)">+1</button><button class="btn ghost" onclick="incPhrase('${p.id}',-1)">−</button><button class="btn ghost" onclick="delPhrase('${p.id}')">✕</button></div>`).join(""):`<div class="hint">Lägg till fraser du lätt överanvänder. Knappa +1 under sändning så ser du vilka som skenar.</div>`}
+      </div>
+      ${phrases.length?`<div class="rowbtns"><button class="btn ghost" onclick="resetPhrases()">Nollställ alla räknare</button></div>`:""}
+    </div>
+    <div class="logsec">
+      <h3>Loggbok (självutvärdering & feedback)</h3>
+      <div class="inlineform">
+        <select id="logType"><option value="eval">Självutvärdering</option><option value="feedback">Feedback från regi</option><option value="egen">Egen notering</option></select>
+        <select id="logMatch"><option value="">Ingen match</option>${state.matches.map(m=>`<option value="${m.id}">${esc(sideName(m,"a"))} vs ${esc(sideName(m,"b"))} (${esc(m.date)})</option>`).join("")}</select>
+      </div>
+      <div class="inlineform">
+        <input type="text" id="logText" placeholder="Vad gick bra, vad ska bli bättre, vad sa regin…" style="min-width:60%">
+        <button class="btn primary" onclick="addLog()">Spara notering</button>
+      </div>
+      <div style="margin-top:14px">
+        ${logs.length?logs.map(l=>{const m=state.matches.find(x=>x.id===l.matchId);return `<div class="logitem"><div class="lmeta">${esc(l.date)} · ${tlabel[l.type]||"Notering"}${m?" · "+esc(sideName(m,"a"))+" vs "+esc(sideName(m,"b")):""}</div><div>${esc(l.text)}</div><div class="rowbtns"><button class="btn ghost" onclick="delLog('${l.id}')">Ta bort</button></div></div>`}).join(""):`<div class="hint">Logga efter varje match. Det är det enda som faktiskt gör dig vassare över tid.</div>`}
+      </div>
+    </div>`;
+}
+function addPhrase(){const t=document.getElementById("newPhrase").value.trim();if(!t)return;state.phrases.push({id:uid(),text:t,count:0});renderLogs();save()}
+function incPhrase(id,d){const p=state.phrases.find(x=>x.id===id);if(p){p.count=Math.max(0,p.count+(d||1));renderLogs();save()}}
+function delPhrase(id){state.phrases=state.phrases.filter(x=>x.id!==id);renderLogs();save()}
+function resetPhrases(){state.phrases.forEach(p=>p.count=0);renderLogs();save()}
+function addLog(){const t=document.getElementById("logText").value.trim();if(!t)return;state.logs.push({id:uid(),date:todayStr(),type:document.getElementById("logType").value,matchId:document.getElementById("logMatch").value,text:t});renderLogs();save()}
+function delLog(id){state.logs=state.logs.filter(x=>x.id!==id);renderLogs();save()}
+
+/* ---------- view + modal plumbing ---------- */
+function openModal(id){document.getElementById(id).classList.add("open")}
+function closeModal(id){document.getElementById(id).classList.remove("open")}
+function setView(v){
+  state.view=v;
+  document.getElementById("tabBoard").classList.toggle("on",v==="board");
+  document.getElementById("tabMatches").classList.toggle("on",v==="matches");
+  document.getElementById("tabLogs").classList.toggle("on",v==="logs");
+  document.getElementById("boardMain").style.display=v==="board"?"grid":"none";
+  document.getElementById("matchesMain").style.display=v==="matches"?"grid":"none";
+  document.getElementById("logsMain").style.display=v==="logs"?"grid":"none";
+  document.getElementById("sports").style.display=v==="board"?"flex":"none";
+  document.getElementById("searchWrap").style.display=v==="board"?"flex":"none";
+  document.getElementById("count").style.display=v==="board"?"block":"none";
+  render();
+}
+function render(){renderSports();if(state.view==="board"){renderList();renderDetail()}else if(state.view==="matches"){renderMatches()}else{renderLogs()}save()}
+
+/* ---------- events ---------- */
+document.getElementById("q").addEventListener("input",e=>{state.q=e.target.value;renderList()});
+document.getElementById("addBtn").onclick=()=>{state.view==="matches"?openMatchModal():openAdd()};
+document.getElementById("matchBtn").onclick=openMatchView;
+document.getElementById("printBtn").onclick=()=>{state.view==="matches"&&state.selMatch?printMatch(state.selMatch):printBoard()};
+document.getElementById("favBtn").onclick=()=>{state.favOnly=!state.favOnly;const b=document.getElementById("favBtn");b.classList.toggle("primary",state.favOnly);b.textContent=state.favOnly?"★":"☆";renderList()};
+document.getElementById("saveBtn").onclick=saveEntry;
+document.getElementById("cancelBtn").onclick=()=>closeModal("modal");
+document.getElementById("deleteBtn").onclick=deleteEntry;
+document.getElementById("mSaveBtn").onclick=saveMatch;
+document.getElementById("mCancelBtn").onclick=()=>closeModal("mmodal");
+document.getElementById("mDeleteBtn").onclick=deleteMatch;
+document.getElementById("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify({entries:state.entries,matches:state.matches,logs:state.logs,phrases:state.phrases},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="spotterboard-"+todayStr()+".json";a.click()};
+document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
+document.getElementById("importFile").onchange=e=>{if(e.target.files[0])importData(e.target.files[0]);e.target.value=""};
+function importData(file){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.entries||!Array.isArray(d.entries))throw 0;if(confirm("Ersätta nuvarande data? (Avbryt = slå ihop)")){state.entries=d.entries.map(e=>({id:e.id||uid(),...e}));if(d.matches)state.matches=d.matches;if(d.logs)state.logs=d.logs;if(d.phrases)state.phrases=d.phrases}else{const ids=new Set(state.entries.map(e=>e.id));d.entries.forEach(e=>{if(!e.id||!ids.has(e.id))state.entries.push({id:e.id||uid(),...e})});if(d.matches){const mids=new Set(state.matches.map(m=>m.id));d.matches.forEach(m=>{if(!m.id||!mids.has(m.id))state.matches.push({id:m.id||uid(),...m})})}}state.sel=null;state.selMatch=null;render()}catch(e){alert("Kunde inte läsa filen.")}};r.readAsText(file)}
+[["modal"],["mmodal"]].forEach(([id])=>document.getElementById(id).addEventListener("click",e=>{if(e.target.id===id)closeModal(id)}));
+document.getElementById("fsp").onclick=()=>setFs(.1);
+document.getElementById("fsm").onclick=()=>setFs(-.1);
+function setFs(d){let v=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--fs"))||1;v=Math.min(1.8,Math.max(.8,v+d));document.documentElement.style.setProperty("--fs",v);localStorage.setItem("fs",v)}
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){closeModal("modal");closeModal("mmodal");closeMatchView();closeLive()}
+  if([...document.querySelectorAll(".modal.open")].length)return;
+  const tag=(e.target.tagName||"").toLowerCase();if(tag==="input"||tag==="textarea"||tag==="select")return;
+  if(e.key==="/"&&state.view==="board"){e.preventDefault();document.getElementById("q").focus()}
+  if(e.key==="a"){e.preventDefault();state.view==="matches"?openMatchModal():openAdd()}
+  if(e.key==="m"){e.preventDefault();openMatchView()}
+});
+
+/* init */
+const sf=localStorage.getItem("fs");if(sf)document.documentElement.style.setProperty("--fs",sf);
+try{const m=JSON.parse(localStorage.getItem("spotterboard.match"));if(m){state.matchA=m.a;state.matchB=m.b}}catch(e){}
+load();render();
+</script>
+</body>
+</html>
