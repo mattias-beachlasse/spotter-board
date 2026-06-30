@@ -38,6 +38,9 @@
   }
   .search input{flex:1; background:transparent; border:0; outline:0; color:var(--text); font-size:1.05em; font-weight:600;}
   .search kbd{color:var(--muted);font-size:.7em;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  #micBtn{background:transparent;border:0;color:var(--muted);cursor:pointer;font-size:1.1em;padding:0 2px;line-height:1}
+  #micBtn.listening{color:var(--rec);animation:micpulse 1s infinite}
+  @keyframes micpulse{50%{opacity:.35}}
   .btn{
     background:var(--panel2); color:var(--text); border:1px solid var(--line);
     border-radius:9px; padding:8px 12px; font-weight:700; cursor:pointer; font-size:.95em; white-space:nowrap;
@@ -221,6 +224,7 @@
   <div class="search" id="searchWrap">
     <span style="color:var(--muted)">⌕</span>
     <input id="q" type="text" placeholder="Sök spelare, lag, nyckelord…" autocomplete="off">
+    <button id="micBtn" title="Röststyrd sök (säg ett namn)" style="display:none">🎤</button>
     <kbd>/</kbd>
   </div>
   <div class="tools">
@@ -979,6 +983,28 @@ function checkNudge(){
     document.getElementById("nudge").style.display="flex";
   }
 }
+
+/* ---------- v18 voice search ---------- */
+(function(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  const mic=document.getElementById("micBtn");
+  if(!SR||!mic)return;
+  mic.style.display="inline-block";
+  let rec=null, listening=false;
+  mic.onclick=()=>{
+    if(listening){try{rec.stop()}catch(e){}return;}
+    rec=new SR();rec.lang="sv-SE";rec.interimResults=false;rec.maxAlternatives=1;
+    rec.onstart=()=>{listening=true;mic.classList.add("listening")};
+    rec.onend=()=>{listening=false;mic.classList.remove("listening")};
+    rec.onerror=()=>{listening=false;mic.classList.remove("listening")};
+    rec.onresult=e=>{
+      const t=(e.results[0][0].transcript||"").trim();
+      if(state.view!=="board")setView("board");
+      const q=document.getElementById("q");q.value=t;state.q=t;renderList();
+    };
+    try{rec.start()}catch(e){}
+  };
+})();
 
 /* init */
 const sf=localStorage.getItem("fs");if(sf)document.documentElement.style.setProperty("--fs",sf);
