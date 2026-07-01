@@ -253,6 +253,7 @@
       <button class="btn" id="menuBtn" title="Fler funktioner" aria-label="Meny">⋯ Mer</button>
       <div class="menu" id="menu">
         <button class="mi" id="favBtn">☆ Visa bara favoriter</button>
+        <button class="mi" id="fivbBtn" style="display:none">⚡ Importera från FIVB</button>
         <button class="mi" id="rulesBtn">📖 Regler och domartecken</button>
         <button class="mi" id="printBtn">⎙ Skriv ut / PDF</button>
         <button class="mi" id="exportBtn">⬇ Exportera till fil</button>
@@ -426,6 +427,22 @@
     <div class="hint" style="margin-bottom:10px">Startuppsättning för beachvolley. Detaljer (tekniska timeouts, sidbyten) varierar med format och förbund, verifiera mot aktuellt regelverk.</div>
     <div id="rulesList"></div>
     <div class="modal-actions"><div></div><button class="btn primary" onclick="closeModal('rulesmodal')">Stäng</button></div>
+  </div>
+</div>
+
+<!-- FIVB import modal -->
+<div class="modal" id="fivbmodal">
+  <div class="sheet">
+    <h2>Importera från FIVB</h2>
+    <div class="search" style="margin-bottom:8px"><span style="color:var(--muted)">⌕</span><input id="fivbQ" type="text" placeholder="Sök spelare i FIVB-databasen…" autocomplete="off"></div>
+    <div class="rowbtns" style="margin-bottom:8px">
+      <button class="chip" onclick="setFivbGender('')">Alla</button>
+      <button class="chip" onclick="setFivbGender('W')">Damer</button>
+      <button class="chip" onclick="setFivbGender('M')">Herrar</button>
+    </div>
+    <div class="hint" id="fivbStatus" style="margin-bottom:8px">Skriv minst två bokstäver.</div>
+    <div id="fivbList"></div>
+    <div class="modal-actions"><div></div><button class="btn primary" onclick="closeModal('fivbmodal')">Stäng</button></div>
   </div>
 </div>
 
@@ -973,6 +990,8 @@ document.getElementById("exportBtn").onclick=exportNow;
 document.getElementById("helpBtn").onclick=openHelp;
 document.getElementById("rulesBtn").onclick=openRules;
 document.getElementById("rulesQ").addEventListener("input",e=>renderRules(e.target.value));
+document.getElementById("fivbBtn").onclick=openFivb;
+document.getElementById("fivbQ").addEventListener("input",fivbSearch);
 document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
 document.getElementById("importFile").onchange=e=>{if(e.target.files[0])importData(e.target.files[0]);e.target.value=""};
 function importData(file){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.entries||!Array.isArray(d.entries))throw 0;localStorage.setItem("spotterboard.preimport",JSON.stringify({entries:state.entries,matches:state.matches,logs:state.logs,phrases:state.phrases}));if(confirm("Ersätta nuvarande data? (Avbryt = slå ihop)")){state.entries=d.entries.map(e=>({id:e.id||uid(),...e}));if(d.matches)state.matches=d.matches;if(d.logs)state.logs=d.logs;if(d.phrases)state.phrases=d.phrases}else{const ids=new Set(state.entries.map(e=>e.id));d.entries.forEach(e=>{if(!e.id||!ids.has(e.id))state.entries.push({id:e.id||uid(),...e})});if(d.matches){const mids=new Set(state.matches.map(m=>m.id));d.matches.forEach(m=>{if(!m.id||!mids.has(m.id))state.matches.push({id:m.id||uid(),...m})})}}state.sel=null;state.selMatch=null;render()}catch(e){alert("Kunde inte läsa filen.")}};r.readAsText(file)}
@@ -981,7 +1000,7 @@ document.getElementById("fsp").onclick=()=>setFs(.1);
 document.getElementById("fsm").onclick=()=>setFs(-.1);
 function setFs(d){let v=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--fs"))||1;v=Math.min(1.8,Math.max(.8,v+d));document.documentElement.style.setProperty("--fs",v);localStorage.setItem("fs",v)}
 document.addEventListener("keydown",e=>{
-  if(e.key==="Escape"){closeModal("modal");closeModal("mmodal");closeModal("hmodal");closeModal("rulesmodal");closeMatchView();closeLive();const mn=document.getElementById("menu");if(mn)mn.classList.remove("open")}
+  if(e.key==="Escape"){closeModal("modal");closeModal("mmodal");closeModal("hmodal");closeModal("rulesmodal");closeModal("fivbmodal");closeMatchView();closeLive();const mn=document.getElementById("menu");if(mn)mn.classList.remove("open")}
   if([...document.querySelectorAll(".modal.open")].length)return;
   if(document.getElementById("liveview").classList.contains("open")){
     if(e.key==="1"){state.spotlight="A";renderLive()}
@@ -1084,6 +1103,47 @@ function renderRules(f){
   };
 })();
 
+/* ---------- FIVB import (dev domain, via /api) ---------- */
+let fivbGender="", fivbTimer=null;
+function openFivb(){document.getElementById("fivbQ").value="";document.getElementById("fivbList").innerHTML="";document.getElementById("fivbStatus").textContent="Skriv minst två bokstäver.";openModal("fivbmodal");setTimeout(()=>document.getElementById("fivbQ").focus(),50);}
+function setFivbGender(g){fivbGender=g;fivbSearch();}
+function fivbSearch(){
+  const q=document.getElementById("fivbQ").value.trim();
+  const st=document.getElementById("fivbStatus");
+  if(q.length<2){document.getElementById("fivbList").innerHTML="";st.textContent="Skriv minst två bokstäver.";return;}
+  clearTimeout(fivbTimer);
+  fivbTimer=setTimeout(async()=>{
+    st.textContent="Söker…";
+    try{
+      const r=await fetch("/api/players?q="+encodeURIComponent(q)+(fivbGender?("&gender="+fivbGender):""),{credentials:"include"});
+      const list=await r.json();
+      renderFivbResults(Array.isArray(list)?list:[]);
+    }catch(e){st.textContent="Kunde inte nå FIVB-API:t.";}
+  },300);
+}
+function renderFivbResults(list){
+  const el=document.getElementById("fivbList"), st=document.getElementById("fivbStatus");
+  if(!list.length){st.textContent="Inga träffar.";el.innerHTML="";return;}
+  st.textContent=list.length+" träffar.";
+  el.innerHTML=list.map(p=>`<div class="ruleitem" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><div class="rq">${esc(p.full_name)}</div><div class="ra">${esc([p.country_code,p.gender==="W"?"Dam":(p.gender==="M"?"Herr":"")].filter(Boolean).join(" · "))}</div></div><button class="btn primary" onclick="addFivbPlayer(${intId(p.id)})">Lägg till</button></div>`).join("");
+}
+function intId(x){const n=parseInt(x,10);return Number.isFinite(n)?n:0;}
+async function addFivbPlayer(id){
+  const st=document.getElementById("fivbStatus");st.textContent="Hämtar spelare…";
+  try{
+    const r=await fetch("/api/player?id="+id,{credentials:"include"});
+    const d=await r.json();
+    if(!d||!d.player){st.textContent="Kunde inte hämta spelaren.";return;}
+    const p=d.player,rt=d.rating;
+    const fields=[{label:"Land",value:p.country_code||""}];
+    if(rt&&rt.conservative_rating!=null)fields.push({label:"TrueSkill",value:Number(rt.conservative_rating).toFixed(1)});
+    if(rt&&rt.matches_played!=null)fields.push({label:"Matcher",value:String(rt.matches_played)});
+    const stats=(d.results||[]).slice(0,6).map(x=>x.season+" "+x.tournament_name+(x.placement?(" ("+x.placement+")"):"")+(x.teammate_full_name?(" m. "+x.teammate_full_name):"")).join("\n");
+    const e={id:uid(),name:p.full_name,phon:"",sport:"Beachvolley",team:p.country_code||"",role:"",num:"",color:COLORS[0],record:"",tags:["FIVB"],fields,facts:[],nuggets:(d.storylines||[]).slice(),stats};
+    state.entries.push(e);state.sel=e.id;save();closeModal("fivbmodal");if(state.view!=="board")setView("board");render();
+  }catch(e){st.textContent="Fel vid hämtning.";}
+}
+
 /* ---------- cloud sync via SSO (X-Auth-Email header), dev subdomain only ---------- */
 const CLOUD=/(^|\.)dev\.thebeach\.one$/.test(location.hostname);
 async function cloudPull(){
@@ -1108,7 +1168,7 @@ function cloudPush(){
 const sf=localStorage.getItem("fs");if(sf)document.documentElement.style.setProperty("--fs",sf);
 try{const m=JSON.parse(localStorage.getItem("spotterboard.match"));if(m){state.matchA=m.a;state.matchB=m.b}}catch(e){}
 load();render();
-if(CLOUD)cloudPull().then(ok=>{if(ok)render();else cloudPush()});
+if(CLOUD){document.getElementById("fivbBtn").style.display="block";cloudPull().then(ok=>{if(ok)render();else cloudPush()});}
 if("serviceWorker" in navigator && location.protocol.indexOf("http")===0){navigator.serviceWorker.register("sw.js").catch(()=>{})}
 if(!localStorage.getItem("spotterboard.onboarded")){openHelp();localStorage.setItem("spotterboard.onboarded","1")}
 checkNudge();
