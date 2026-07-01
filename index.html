@@ -10,7 +10,7 @@
 <style>
   :root{
     --bg:#0a0c10; --panel:#13171d; --panel2:#191e26; --line:#262d38;
-    --text:#f3f5f8; --muted:#8c97a6; --accent:#ffd23f; --accent2:#3ad0c8;
+    --text:#f3f5f8; --muted:#a2adba; --accent:#ffd23f; --accent2:#3ad0c8;
     --good:#46c97a; --warn:#ff7a59; --rec:#ff4d6d; --fs:1;
   }
   *{box-sizing:border-box}
@@ -43,18 +43,28 @@
   @keyframes micpulse{50%{opacity:.35}}
   .btn{
     background:var(--panel2); color:var(--text); border:1px solid var(--line);
-    border-radius:9px; padding:8px 12px; font-weight:700; cursor:pointer; font-size:.95em; white-space:nowrap;
+    border-radius:9px; padding:8px 14px; font-weight:700; cursor:pointer; font-size:.95em; white-space:nowrap;
+    min-height:44px; display:inline-flex; align-items:center; justify-content:center;
   }
   .btn:hover{border-color:#3a4250;background:#1f2630}
   .btn.primary{background:var(--accent);color:#1a1500;border-color:var(--accent)}
   .btn.primary:hover{background:#ffdd66}
   .btn.ghost{background:transparent}
   .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .menuwrap{position:relative}
+  .menu{position:absolute;right:0;top:calc(100% + 8px);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px;display:none;flex-direction:column;min-width:250px;z-index:60;box-shadow:0 14px 34px rgba(0,0,0,.55)}
+  .menu.open{display:flex}
+  .menu .mi{background:transparent;border:0;color:var(--text);text-align:left;padding:12px 12px;border-radius:8px;font-weight:600;cursor:pointer;font-size:1em;min-height:46px;white-space:nowrap}
+  .menu .mi:hover{background:var(--panel2)}
+  .menu .mi.active{color:var(--accent)}
+  .menu .mi-row{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;color:var(--muted);font-weight:700;border-top:1px solid var(--line);margin-top:4px}
+  .fsbtn{min-width:44px;height:44px;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:8px;font-weight:800;cursor:pointer}
+  #menuBtn.dot{border-color:var(--accent);color:var(--accent)}
   .fs{display:flex;gap:4px}
-  .fs button{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);cursor:pointer;font-weight:800}
+  .fs button{width:44px;height:44px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);cursor:pointer;font-weight:800}
 
   .sports{display:flex;gap:8px;padding:10px 16px;overflow-x:auto;border-bottom:1px solid var(--line);background:#0d1117}
-  .chip{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:999px;padding:6px 14px;font-weight:700;cursor:pointer;white-space:nowrap;font-size:.9em;}
+  .chip{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:999px;padding:9px 18px;font-weight:700;cursor:pointer;white-space:nowrap;font-size:.9em;min-height:44px;display:inline-flex;align-items:center}
   .chip.active{background:var(--accent);color:#1a1500;border-color:var(--accent)}
   .count{color:var(--muted);font-size:.8em;padding:6px 16px}
 
@@ -79,7 +89,11 @@
   .dh .bignum{font-size:3em;font-weight:900;color:var(--accent);line-height:1}
   .dh h1{font-size:2.4em;margin:0;line-height:1.05;font-weight:900}
   .dh .ph{color:var(--accent2);font-style:italic;font-size:1.3em;margin-top:4px;display:flex;align-items:center;gap:10px}
-  .speak{background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--text);cursor:pointer;padding:3px 9px;font-size:.7em;font-style:normal;font-weight:700}
+  .speak{background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--text);cursor:pointer;padding:8px 12px;font-size:.7em;font-style:normal;font-weight:700;min-height:44px;display:inline-flex;align-items:center}
+  .favtoggle{background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--muted);cursor:pointer;padding:8px 12px;font-size:.7em;font-weight:800;min-height:44px;display:inline-flex;align-items:center}
+  .favtoggle.on{color:var(--accent);border-color:var(--accent)}
+  .backlist{display:none}
+  @media(max-width:760px){.backlist{display:inline-flex;align-items:center;margin-bottom:12px}}
   .meta{color:var(--muted);font-weight:700;margin-top:6px}
   .sec{margin-top:22px}
   .sec h3{margin:0 0 8px;font-size:.8em;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
@@ -204,6 +218,10 @@
   .logitem .lmeta{color:var(--muted);font-size:.78em;font-weight:700;margin-bottom:4px}
   .inlineform{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
   .inlineform input,.inlineform select{flex:1;min-width:120px}
+  .rulecat{color:var(--accent);font-weight:800;font-size:.78em;letter-spacing:1px;text-transform:uppercase;margin:14px 0 6px}
+  .ruleitem{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--accent2);border-radius:8px;padding:9px 12px;margin-bottom:6px}
+  .ruleitem .rq{font-weight:800}
+  .ruleitem .ra{color:var(--muted);margin-top:2px;font-size:.95em}
   @media(max-width:860px){.mcols,.lcols{grid-template-columns:1fr;overflow:auto}.mcenter,.lcenter{border:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}}
   @media(max-width:760px){
     main{grid-template-columns:1fr}
@@ -223,19 +241,25 @@
   </div>
   <div class="search" id="searchWrap">
     <span style="color:var(--muted)">⌕</span>
-    <input id="q" type="text" placeholder="Sök spelare, lag, nyckelord…" autocomplete="off">
+    <input id="q" type="text" placeholder="Sök… även #tagg, sport:, lag:" autocomplete="off">
     <button id="micBtn" title="Röststyrd sök (säg ett namn)" style="display:none">🎤</button>
     <kbd>/</kbd>
   </div>
   <div class="tools">
-    <div class="fs"><button id="fsm" title="Mindre text">A-</button><button id="fsp" title="Större text">A+</button></div>
-    <button class="btn" id="favBtn" title="Visa bara favoriter">☆</button>
-    <button class="btn" id="helpBtn" title="Hjälp, data och säkerhetskopia">?</button>
-    <button class="btn" id="matchBtn" title="Match-läge">⚔ Match</button>
-    <button class="btn" id="printBtn" title="Skriv ut / PDF">⎙ Skriv ut</button>
-    <button class="btn" id="exportBtn">Export</button>
-    <button class="btn" id="importBtn">Import</button>
+    <div class="fs"><button class="fsbtn" id="fsm" title="Mindre text">A-</button><button class="fsbtn" id="fsp" title="Större text">A+</button></div>
+    <button class="btn" id="matchBtn" title="Match-läge (m)">⚔ Match</button>
     <button class="btn primary" id="addBtn">+ Lägg till</button>
+    <div class="menuwrap">
+      <button class="btn" id="menuBtn" title="Fler funktioner" aria-label="Meny">⋯ Mer</button>
+      <div class="menu" id="menu">
+        <button class="mi" id="favBtn">☆ Visa bara favoriter</button>
+        <button class="mi" id="rulesBtn">📖 Regler och domartecken</button>
+        <button class="mi" id="printBtn">⎙ Skriv ut / PDF</button>
+        <button class="mi" id="exportBtn">⬇ Exportera till fil</button>
+        <button class="mi" id="importBtn">⬆ Importera från fil</button>
+        <button class="mi" id="helpBtn">❔ Hjälp och säkerhetskopia</button>
+      </div>
+    </div>
     <input type="file" id="importFile" accept="application/json" hidden>
   </div>
 </header>
@@ -265,7 +289,7 @@
 <!-- Match mode -->
 <div class="matchview" id="matchview">
   <div class="mtop">
-    <div class="ttl"><b>⚔ MATCH-LÄGE</b></div>
+    <div class="ttl"><b>⚔ MATCH-LÄGE</b> <span style="color:var(--muted);font-size:.72em;font-weight:600">s byter sida, ▶ till live</span></div>
     <div style="flex:1"></div>
     <button class="btn" onclick="swapSides()">⇄ Byt sida</button>
     <button class="btn" onclick="openLiveFromMatchMode()">▶ Live-läge</button>
@@ -290,7 +314,7 @@
   <div class="sheet">
     <h2 id="modalTitle">Lägg till</h2>
     <details class="pasteblock">
-      <summary>📋 Klistra in text och tolka (v6)</summary>
+      <summary>📋 Klistra in text och tolka</summary>
       <textarea id="f_paste" placeholder="Klistra in en bio eller artikel, så plockar appen ut fakta, nuggets och nyckeltal…"></textarea>
       <div class="rowbtns"><button type="button" class="btn" onclick="parsePaste()">Tolka texten</button></div>
       <div class="hint">Enkel regelbaserad tolkning. Granska alltid resultatet innan du sparar.</div>
@@ -374,7 +398,7 @@
       <li><b>Tavla:</b> sökbar databas över spelare och lag. Tryck <kbd>/</kbd> för sök, <kbd>a</kbd> för ny.</li>
       <li><b>Matcher:</b> lägg upp dagens matcher, öppna i Match-läge eller Live (<kbd>m</kbd>).</li>
       <li><b>Logg:</b> fras-spårare och självutvärdering efter match.</li>
-      <li><b>Live-läge:</b> tryck <kbd>1</kbd> eller <kbd>2</kbd> för att zooma in en sida, <kbd>0</kbd> för båda, <kbd>s</kbd> byter sida.</li>
+      <li><b>Live-läge:</b> tryck <kbd>1</kbd> eller <kbd>2</kbd> för att zooma in en sida, <kbd>0</kbd> eller <kbd>b</kbd> för båda, <kbd>s</kbd> byter sida.</li>
     </ul>
     <h3 style="margin-top:18px;font-size:.85em;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted)">Exempeldata</h3>
     <div class="rowbtns">
@@ -391,6 +415,17 @@
       <button class="btn" onclick="restoreImport()">Ångra senaste import</button>
     </div>
     <div class="modal-actions"><div></div><button class="btn primary" onclick="closeModal('hmodal')">Stäng</button></div>
+  </div>
+</div>
+
+<!-- Rules reference modal -->
+<div class="modal" id="rulesmodal">
+  <div class="sheet">
+    <h2>Regler och domartecken</h2>
+    <div class="search" style="margin-bottom:12px"><span style="color:var(--muted)">⌕</span><input id="rulesQ" type="text" placeholder="Sök regel, t.ex. serve, block, sidbyte…" autocomplete="off"></div>
+    <div class="hint" style="margin-bottom:10px">Startuppsättning för beachvolley. Detaljer (tekniska timeouts, sidbyten) varierar med format och förbund, verifiera mot aktuellt regelverk.</div>
+    <div id="rulesList"></div>
+    <div class="modal-actions"><div></div><button class="btn primary" onclick="closeModal('rulesmodal')">Stäng</button></div>
   </div>
 </div>
 
@@ -510,13 +545,15 @@ function renderDetail(){
   const e=entry(state.sel);
   if(!e){el.innerHTML=`<div class="empty"><div style="font-size:2.4em">🎙️</div><div>Välj någon i listan, eller lägg till din första spelare.</div><div style="font-size:.85em">Tips: <kbd>/</kbd> söker, <kbd>a</kbd> lägger till, <kbd>m</kbd> match.</div></div>`;return}
   el.innerHTML=`
+    <button class="backlist btn" onclick="document.body.classList.add('showlist')">‹ Lista</button>
     ${e.record?`<div class="recbanner">🏆 ${esc(e.record)}</div>`:""}
     <div class="dh">
       ${e.num?`<div class="bignum">${esc(e.num)}</div>`:""}
       <div style="flex:1;min-width:0">
-        <h1>${esc(e.name)} <span class="speak" style="cursor:pointer" onclick="toggleFav('${e.id}')">${e.fav?"★ favorit":"☆ favorit"}</span></h1>
+        <h1>${esc(e.name)}</h1>
         ${e.phon||e.phonAudio?`<div class="ph">${e.phon?esc(e.phon):""} <button class="speak" onclick="speak('${jsesc(e.name)}')">► datorröst</button>${e.phonAudio?` <button class="speak" onclick="playAudio('${e.id}')">► din inspelning</button>`:""}</div>`:""}
         <div class="meta">${esc([e.sport,e.team,e.role].filter(Boolean).join("  ·  "))}</div>
+        <div style="margin-top:8px"><span class="favtoggle${e.fav?' on':''}" onclick="toggleFav('${e.id}')">${e.fav?"★ favorit":"☆ favorit"}</span></div>
       </div>
       <div style="width:14px;height:60px;border-radius:5px;background:${e.color||'#444'}"></div>
     </div>
@@ -569,6 +606,7 @@ function renderMatchDetail(){
   const ea=m.aId?entry(m.aId):null, eb=m.bId?entry(m.bId):null;
   const chk=m.check||{};
   el.innerHTML=`
+    <button class="backlist btn" onclick="document.body.classList.add('showlist')">‹ Matcher</button>
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
       <div><div style="font-size:1.6em;font-weight:900">${esc(sideName(m,"a"))} <span style="color:var(--accent)">vs</span> ${esc(sideName(m,"b"))}</div>
       <div class="infoline"><span><b>${esc(m.date)}</b> ${esc(m.time||"")}</span>${m.sport?`<span>${esc(m.sport)}</span>`:""}${m.venue?`<span>📍 <b>${esc(m.venue)}</b></span>`:""}${m.weather?`<span>🌤 ${esc(m.weather)}</span>`:""}</div></div>
@@ -917,7 +955,14 @@ document.getElementById("q").addEventListener("input",e=>{state.q=e.target.value
 document.getElementById("addBtn").onclick=()=>{state.view==="matches"?openMatchModal():openAdd()};
 document.getElementById("matchBtn").onclick=openMatchView;
 document.getElementById("printBtn").onclick=()=>{state.view==="matches"&&state.selMatch?printMatch(state.selMatch):printBoard()};
-document.getElementById("favBtn").onclick=()=>{state.favOnly=!state.favOnly;const b=document.getElementById("favBtn");b.classList.toggle("primary",state.favOnly);b.textContent=state.favOnly?"★":"☆";renderList()};
+document.getElementById("favBtn").onclick=()=>{state.favOnly=!state.favOnly;const b=document.getElementById("favBtn");b.classList.toggle("active",state.favOnly);b.textContent=(state.favOnly?"★":"☆")+" Visa bara favoriter";document.getElementById("menuBtn").classList.toggle("dot",state.favOnly);renderList()};
+(function(){
+  const mb=document.getElementById("menuBtn"), menu=document.getElementById("menu");
+  if(!mb||!menu)return;
+  mb.onclick=e=>{e.stopPropagation();menu.classList.toggle("open")};
+  menu.querySelectorAll(".mi").forEach(b=>b.addEventListener("click",()=>menu.classList.remove("open")));
+  document.addEventListener("click",e=>{if(menu.classList.contains("open")&&!e.target.closest(".menuwrap"))menu.classList.remove("open")});
+})();
 document.getElementById("saveBtn").onclick=saveEntry;
 document.getElementById("cancelBtn").onclick=()=>closeModal("modal");
 document.getElementById("deleteBtn").onclick=deleteEntry;
@@ -926,6 +971,8 @@ document.getElementById("mCancelBtn").onclick=()=>closeModal("mmodal");
 document.getElementById("mDeleteBtn").onclick=deleteMatch;
 document.getElementById("exportBtn").onclick=exportNow;
 document.getElementById("helpBtn").onclick=openHelp;
+document.getElementById("rulesBtn").onclick=openRules;
+document.getElementById("rulesQ").addEventListener("input",e=>renderRules(e.target.value));
 document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
 document.getElementById("importFile").onchange=e=>{if(e.target.files[0])importData(e.target.files[0]);e.target.value=""};
 function importData(file){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.entries||!Array.isArray(d.entries))throw 0;localStorage.setItem("spotterboard.preimport",JSON.stringify({entries:state.entries,matches:state.matches,logs:state.logs,phrases:state.phrases}));if(confirm("Ersätta nuvarande data? (Avbryt = slå ihop)")){state.entries=d.entries.map(e=>({id:e.id||uid(),...e}));if(d.matches)state.matches=d.matches;if(d.logs)state.logs=d.logs;if(d.phrases)state.phrases=d.phrases}else{const ids=new Set(state.entries.map(e=>e.id));d.entries.forEach(e=>{if(!e.id||!ids.has(e.id))state.entries.push({id:e.id||uid(),...e})});if(d.matches){const mids=new Set(state.matches.map(m=>m.id));d.matches.forEach(m=>{if(!m.id||!mids.has(m.id))state.matches.push({id:m.id||uid(),...m})})}}state.sel=null;state.selMatch=null;render()}catch(e){alert("Kunde inte läsa filen.")}};r.readAsText(file)}
@@ -934,7 +981,7 @@ document.getElementById("fsp").onclick=()=>setFs(.1);
 document.getElementById("fsm").onclick=()=>setFs(-.1);
 function setFs(d){let v=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--fs"))||1;v=Math.min(1.8,Math.max(.8,v+d));document.documentElement.style.setProperty("--fs",v);localStorage.setItem("fs",v)}
 document.addEventListener("keydown",e=>{
-  if(e.key==="Escape"){closeModal("modal");closeModal("mmodal");closeModal("hmodal");closeMatchView();closeLive()}
+  if(e.key==="Escape"){closeModal("modal");closeModal("mmodal");closeModal("hmodal");closeModal("rulesmodal");closeMatchView();closeLive();const mn=document.getElementById("menu");if(mn)mn.classList.remove("open")}
   if([...document.querySelectorAll(".modal.open")].length)return;
   if(document.getElementById("liveview").classList.contains("open")){
     if(e.key==="1"){state.spotlight="A";renderLive()}
@@ -982,6 +1029,37 @@ function checkNudge(){
     document.getElementById("nudgeText").textContent="Säkerhetskopiera din prep. Det var ett tag sen du exporterade, och all data ligger bara lokalt.";
     document.getElementById("nudge").style.display="flex";
   }
+}
+
+/* ---------- 24 rules reference ---------- */
+const RULES=[
+ {cat:"Poäng",q:"Hur många poäng är ett set?",a:"Rally point till 21, vinst med minst 2. Ett avgörande tredje set spelas till 15, vinst med minst 2."},
+ {cat:"Poäng",q:"Hur många set?",a:"Bäst av tre set."},
+ {cat:"Serve",q:"Serveordning?",a:"Spelarna i laget turas om att serva. Samma spelare fortsätter serva så länge laget vinner bollar."},
+ {cat:"Serve",q:"Servefel?",a:"Fotfel på eller över baslinjen, serven når inte över nät, eller bollen landar ut."},
+ {cat:"Spel",q:"Hur många touch per sida?",a:"Tre touch. I beachvolley räknas blockberöringen som lagets första touch, till skillnad från inomhus."},
+ {cat:"Spel",q:"Räknas blocket som en touch?",a:"Ja. Efter en blockberöring har laget två touch kvar."},
+ {cat:"Spel",q:"Finger-set över nät?",a:"Ett set med fingrarna som går över nät måste gå vinkelrätt mot spelarens axellinje, annars fel."},
+ {cat:"Spel",q:"Får man tippa med fingertopparna?",a:"Nej, tipp med fingertopparna är otillåtet. Använd knogar, handflata eller hård hand."},
+ {cat:"Fel",q:"Dubbelträff?",a:"Otillåtet vid finger-set. Vid en hårt spelad boll i försvar tillåts flera beröringar i samma rörelse."},
+ {cat:"Fel",q:"Lyft eller bär?",a:"Bollen måste träffas rent, den får inte hållas eller bäras."},
+ {cat:"Fel",q:"Nätberöring?",a:"Otillåtet att röra nätet under spelaktion om det påverkar spelet."},
+ {cat:"Fel",q:"Boll på linjen?",a:"Linjen är inne. En boll som nuddar linjen är i spel."},
+ {cat:"Fel",q:"Antennerna?",a:"Bollen måste passera mellan antennerna. Passage utanför antennen är ut."},
+ {cat:"Sidbyte och timeout",q:"När byter lagen sida?",a:"Var 7:e poäng i set 1 och 2, var 5:e poäng i ett avgörande tredje set, räknat på lagens sammanlagda poäng."},
+ {cat:"Sidbyte och timeout",q:"Timeouter?",a:"En lagtimeout på 30 sekunder per set. I många format finns en teknisk timeout när lagens poängsumma når 21 i set 1 och 2."},
+ {cat:"Utrustning",q:"Spelas det barfota?",a:"Ja, beachvolley spelas barfota. Vid kyla kan domaren tillåta skor eller strumpor."},
+ {cat:"Domartecken",q:"Vanliga domartecken?",a:"Boll in: peka mot golvet. Boll ut: underarmar upp. Fyra touch: fyra fingrar. Dubbelträff: två fingrar. Boll berörd: stryk över handflatan. Nätfel: peka på nätkanten."}
+];
+function openRules(){document.getElementById("rulesQ").value="";renderRules("");openModal("rulesmodal");setTimeout(()=>document.getElementById("rulesQ").focus(),50);}
+function renderRules(f){
+  f=(f||"").trim().toLowerCase();
+  const list=RULES.filter(r=>!f||(r.q+" "+r.a+" "+r.cat).toLowerCase().includes(f));
+  const el=document.getElementById("rulesList");
+  if(!list.length){el.innerHTML='<div class="hint">Inga träffar.</div>';return;}
+  let html="",cat=null;
+  list.forEach(r=>{if(r.cat!==cat){cat=r.cat;html+='<div class="rulecat">'+esc(cat)+'</div>';}html+='<div class="ruleitem"><div class="rq">'+esc(r.q)+'</div><div class="ra">'+esc(r.a)+'</div></div>';});
+  el.innerHTML=html;
 }
 
 /* ---------- v18 voice search ---------- */

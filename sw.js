@@ -1,4 +1,4 @@
-const CACHE = "spotterboard-v3";
+const CACHE = "spotterboard-v5";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", e => {
