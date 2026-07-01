@@ -462,7 +462,7 @@ function load(){
   if(!state.entries.length)state.entries=SAMPLE();
   if(!state.matches.length)state.matches=SAMPLEMATCHES();
 }
-function save(){localStorage.setItem(STORE,JSON.stringify({entries:state.entries}));localStorage.setItem(MSTORE,JSON.stringify({matches:state.matches}));localStorage.setItem(LSTORE,JSON.stringify({logs:state.logs,phrases:state.phrases}))}
+function save(){localStorage.setItem(STORE,JSON.stringify({entries:state.entries}));localStorage.setItem(MSTORE,JSON.stringify({matches:state.matches}));localStorage.setItem(LSTORE,JSON.stringify({logs:state.logs,phrases:state.phrases}));cloudPush()}
 
 function SAMPLE(){
   return [
@@ -1084,10 +1084,31 @@ function renderRules(f){
   };
 })();
 
+/* ---------- cloud sync via SSO (X-Auth-Email header), dev subdomain only ---------- */
+const CLOUD=/(^|\.)dev\.thebeach\.one$/.test(location.hostname);
+async function cloudPull(){
+  if(!CLOUD)return false;
+  try{
+    const r=await fetch("/api/board",{credentials:"include"});
+    if(!r.ok)return false;
+    const j=await r.json();
+    const d=j&&j.data?(typeof j.data==="string"?JSON.parse(j.data):j.data):null;
+    if(d&&Array.isArray(d.entries)){state.entries=d.entries;state.matches=d.matches||[];state.logs=d.logs||[];state.phrases=d.phrases||[];return true}
+  }catch(e){}
+  return false;
+}
+let cloudTimer=null;
+function cloudPush(){
+  if(!CLOUD)return;
+  clearTimeout(cloudTimer);
+  cloudTimer=setTimeout(()=>{fetch("/api/board",{method:"PUT",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({entries:state.entries,matches:state.matches,logs:state.logs,phrases:state.phrases})}).catch(()=>{})},1200);
+}
+
 /* init */
 const sf=localStorage.getItem("fs");if(sf)document.documentElement.style.setProperty("--fs",sf);
 try{const m=JSON.parse(localStorage.getItem("spotterboard.match"));if(m){state.matchA=m.a;state.matchB=m.b}}catch(e){}
 load();render();
+if(CLOUD)cloudPull().then(ok=>{if(ok)render();else cloudPush()});
 if("serviceWorker" in navigator && location.protocol.indexOf("http")===0){navigator.serviceWorker.register("sw.js").catch(()=>{})}
 if(!localStorage.getItem("spotterboard.onboarded")){openHelp();localStorage.setItem("spotterboard.onboarded","1")}
 checkNudge();
