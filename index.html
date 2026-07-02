@@ -152,25 +152,6 @@
   .lside .facts li{font-size:1.25em}
   .lcenter{display:flex;align-items:center;justify-content:center;font-size:2.6em;font-weight:900;color:var(--accent)}
   .lbignum{font-size:4.4em;font-weight:900;color:var(--accent);line-height:.9}
-  /* live tracker */
-  .trackview{position:fixed;inset:0;background:#06080b;z-index:45;display:none;flex-direction:column}
-  .trackview.open{display:flex}
-  .tbanner{padding:10px 16px;text-align:center;font-weight:800;min-height:20px;border-bottom:1px solid var(--line)}
-  .tbanner.pt{background:rgba(255,77,109,.18);color:#ff8ba3}
-  .tbanner.sw{background:rgba(255,210,63,.14);color:var(--accent)}
-  .tcols{flex:1;display:grid;grid-template-columns:1fr 210px 1fr;min-height:0}
-  .tside{overflow:auto;padding:20px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center}
-  .tside h2{font-size:1.5em;margin:0}
-  .tside .score{font-size:5em;font-weight:900;color:var(--accent);line-height:1}
-  .bigpt{font-size:1.3em;font-weight:900;padding:20px 0;width:100%;max-width:340px;border-radius:14px;border:1px solid var(--line);background:var(--panel2);color:var(--text);cursor:pointer;min-height:64px}
-  .bigpt:hover{background:#1f2630}
-  .statrow{display:flex;gap:8px;width:100%;max-width:340px;justify-content:center}
-  .statbtn{flex:1;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:8px;cursor:pointer;font-weight:700;min-height:56px}
-  .statbtn b{display:block;font-size:1.3em;color:var(--accent2)}
-  .tmid{border-left:1px solid var(--line);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#0d1117;padding:14px}
-  .tmid .sets{font-size:2.6em;font-weight:900;color:var(--accent)}
-  .tmid .setno{color:var(--muted);font-weight:800}
-  @media(max-width:760px){.tcols{grid-template-columns:1fr;overflow:auto}.tmid{border:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);order:-1}}
 
   /* modal */
   .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
@@ -272,8 +253,6 @@
       <button class="btn" id="menuBtn" title="Fler funktioner" aria-label="Meny">⋯ Mer</button>
       <div class="menu" id="menu">
         <button class="mi" id="favBtn">☆ Visa bara favoriter</button>
-        <button class="mi" id="fivbBtn" style="display:none">⚡ Importera från FIVB</button>
-        <button class="mi" id="nationBtn">🌍 Nationsöversikt</button>
         <button class="mi" id="rulesBtn">📖 Regler och domartecken</button>
         <button class="mi" id="printBtn">⎙ Skriv ut / PDF</button>
         <button class="mi" id="exportBtn">⬇ Exportera till fil</button>
@@ -328,19 +307,6 @@
     <button class="btn primary" onclick="closeLive()">Stäng</button>
   </div>
   <div class="lcols" id="lcols"></div>
-</div>
-
-<!-- Live tracker -->
-<div class="trackview" id="trackview">
-  <div class="mtop">
-    <div class="ttl"><b style="color:var(--rec)">● SPÅRA LIVE</b> <span id="trackLabel" style="color:var(--muted)"></span></div>
-    <div style="flex:1"></div>
-    <button class="btn" onclick="trackUndo()">↶ Ångra</button>
-    <button class="btn" onclick="endTracker()">Avsluta match</button>
-    <button class="btn primary" onclick="closeTracker()">Stäng</button>
-  </div>
-  <div class="tbanner" id="trackBanner"></div>
-  <div class="tcols"><div class="tside" id="tsideA"></div><div class="tmid" id="tmid"></div><div class="tside" id="tsideB"></div></div>
 </div>
 
 <!-- Entry modal -->
@@ -463,32 +429,6 @@
   </div>
 </div>
 
-<!-- Nation overview modal -->
-<div class="modal" id="nationmodal">
-  <div class="sheet">
-    <h2>Nationsöversikt</h2>
-    <div class="hint" id="nationSummary" style="margin-bottom:10px"></div>
-    <div id="nationList"></div>
-    <div class="modal-actions"><div></div><button class="btn primary" onclick="closeModal('nationmodal')">Stäng</button></div>
-  </div>
-</div>
-
-<!-- FIVB import modal -->
-<div class="modal" id="fivbmodal">
-  <div class="sheet">
-    <h2>Importera från FIVB</h2>
-    <div class="search" style="margin-bottom:8px"><span style="color:var(--muted)">⌕</span><input id="fivbQ" type="text" placeholder="Sök spelare i FIVB-databasen…" autocomplete="off"></div>
-    <div class="rowbtns" style="margin-bottom:8px">
-      <button class="chip" onclick="setFivbGender('')">Alla</button>
-      <button class="chip" onclick="setFivbGender('W')">Damer</button>
-      <button class="chip" onclick="setFivbGender('M')">Herrar</button>
-    </div>
-    <div class="hint" id="fivbStatus" style="margin-bottom:8px">Skriv minst två bokstäver.</div>
-    <div id="fivbList"></div>
-    <div class="modal-actions"><div></div><button class="btn primary" onclick="closeModal('fivbmodal')">Stäng</button></div>
-  </div>
-</div>
-
 <div id="printArea"></div>
 
 <script>
@@ -522,7 +462,7 @@ function load(){
   if(!state.entries.length)state.entries=SAMPLE();
   if(!state.matches.length)state.matches=SAMPLEMATCHES();
 }
-function save(){localStorage.setItem(STORE,JSON.stringify({entries:state.entries}));localStorage.setItem(MSTORE,JSON.stringify({matches:state.matches}));localStorage.setItem(LSTORE,JSON.stringify({logs:state.logs,phrases:state.phrases}));cloudPush()}
+function save(){localStorage.setItem(STORE,JSON.stringify({entries:state.entries}));localStorage.setItem(MSTORE,JSON.stringify({matches:state.matches}));localStorage.setItem(LSTORE,JSON.stringify({logs:state.logs,phrases:state.phrases}))}
 
 function SAMPLE(){
   return [
@@ -554,7 +494,7 @@ function SAMPLEMATCHES(){
 
 /* ---------- helpers ---------- */
 function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
-function jsesc(s){return String(s).replace(/['\\]/g,"\\$&")}
+function jsesc(s){return String(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function speak(name){try{const u=new SpeechSynthesisUtterance(name);u.lang="sv-SE";u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
 function toggleFav(id){const e=state.entries.find(x=>x.id===id);if(e){e.fav=!e.fav;render()}}
 function entry(id){return state.entries.find(x=>x.id===id)}
@@ -592,7 +532,7 @@ function renderList(){
     const d=document.createElement("div");
     d.className="card"+(state.sel===e.id?" sel":"")+(e.fav?" isfav":"");
     d.onclick=()=>{state.sel=e.id;document.body.classList.remove("showlist");render()};
-    d.innerHTML=`<div class="stripe" style="background:${e.color||'#444'}"></div>
+    d.innerHTML=`<div class="stripe" style="background:${esc(e.color||'#444')}"></div>
       ${e.num?`<div class="num">${esc(e.num)}</div>`:`<div class="num" style="color:var(--muted)">·</div>`}
       <div class="who"><div class="nm">${esc(e.name)}</div>${e.phon?`<div class="ph">${esc(e.phon)}</div>`:""}<div class="tm">${esc([e.team,e.role].filter(Boolean).join(" · "))}</div></div>
       <div class="fav">★</div>`;
@@ -615,7 +555,7 @@ function renderDetail(){
         <div class="meta">${esc([e.sport,e.team,e.role].filter(Boolean).join("  ·  "))}</div>
         <div style="margin-top:8px"><span class="favtoggle${e.fav?' on':''}" onclick="toggleFav('${e.id}')">${e.fav?"★ favorit":"☆ favorit"}</span></div>
       </div>
-      <div style="width:14px;height:60px;border-radius:5px;background:${e.color||'#444'}"></div>
+      <div style="width:14px;height:60px;border-radius:5px;background:${esc(e.color||'#444')}"></div>
     </div>
     ${fieldsHTML(e.fields)}
     ${section("Nyckelfakta",e.facts,"facts")}
@@ -624,7 +564,6 @@ function renderDetail(){
     ${(e.tags||[]).length?`<div class="sec"><h3>Taggar</h3><div class="tags">${(e.tags||[]).map(t=>`<span class="tag" onclick="filterByTag('${jsesc(t)}')">#${esc(t)}</span>`).join("")}</div></div>`:""}
     <div class="editrow">
       <button class="btn" onclick="openEdit('${e.id}')">Redigera</button>
-      ${CLOUD?`<button class="btn" onclick="enrichFromFivb('${e.id}')">⚡ Uppdatera från FIVB</button>`:""}
       <button class="btn" onclick="setSide('A','${e.id}');openMatchView()">→ Match vänster</button>
       <button class="btn" onclick="setSide('B','${e.id}');openMatchView()">→ Match höger</button>
     </div>`;
@@ -674,7 +613,6 @@ function renderMatchDetail(){
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn primary" onclick="openMatchFromCard('${m.id}')">⚔ Match-läge</button>
         <button class="btn" onclick="openLiveFromCard('${m.id}')">▶ Live</button>
-        <button class="btn" onclick="openTracker('${m.id}')">● Spåra live</button>
         <button class="btn" onclick="printMatch('${m.id}')">⎙ Skriv ut</button>
       </div>
     </div>
@@ -733,7 +671,7 @@ function sideHTML(side,id){
     <div class="dh" style="margin-top:14px">
       ${e.num?`<div class="bignum">${esc(e.num)}</div>`:""}
       <div style="flex:1;min-width:0"><h1>${esc(e.name)}</h1>${e.phon?`<div class="ph">${esc(e.phon)} <button class="speak" onclick="speak('${jsesc(e.name)}')">►</button></div>`:""}<div class="meta">${esc([e.team,e.role].filter(Boolean).join("  ·  "))}</div></div>
-      <div style="width:12px;height:54px;border-radius:5px;background:${e.color||'#444'}"></div>
+      <div style="width:12px;height:54px;border-radius:5px;background:${esc(e.color||'#444')}"></div>
     </div>
     ${fieldsHTML(e.fields)}
     ${section("Nyckelfakta",e.facts,"facts")}
@@ -1035,9 +973,6 @@ document.getElementById("exportBtn").onclick=exportNow;
 document.getElementById("helpBtn").onclick=openHelp;
 document.getElementById("rulesBtn").onclick=openRules;
 document.getElementById("rulesQ").addEventListener("input",e=>renderRules(e.target.value));
-document.getElementById("fivbBtn").onclick=openFivb;
-document.getElementById("fivbQ").addEventListener("input",fivbSearch);
-document.getElementById("nationBtn").onclick=openNations;
 document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
 document.getElementById("importFile").onchange=e=>{if(e.target.files[0])importData(e.target.files[0]);e.target.value=""};
 function importData(file){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.entries||!Array.isArray(d.entries))throw 0;localStorage.setItem("spotterboard.preimport",JSON.stringify({entries:state.entries,matches:state.matches,logs:state.logs,phrases:state.phrases}));if(confirm("Ersätta nuvarande data? (Avbryt = slå ihop)")){state.entries=d.entries.map(e=>({id:e.id||uid(),...e}));if(d.matches)state.matches=d.matches;if(d.logs)state.logs=d.logs;if(d.phrases)state.phrases=d.phrases}else{const ids=new Set(state.entries.map(e=>e.id));d.entries.forEach(e=>{if(!e.id||!ids.has(e.id))state.entries.push({id:e.id||uid(),...e})});if(d.matches){const mids=new Set(state.matches.map(m=>m.id));d.matches.forEach(m=>{if(!m.id||!mids.has(m.id))state.matches.push({id:m.id||uid(),...m})})}}state.sel=null;state.selMatch=null;render()}catch(e){alert("Kunde inte läsa filen.")}};r.readAsText(file)}
@@ -1046,7 +981,7 @@ document.getElementById("fsp").onclick=()=>setFs(.1);
 document.getElementById("fsm").onclick=()=>setFs(-.1);
 function setFs(d){let v=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--fs"))||1;v=Math.min(1.8,Math.max(.8,v+d));document.documentElement.style.setProperty("--fs",v);localStorage.setItem("fs",v)}
 document.addEventListener("keydown",e=>{
-  if(e.key==="Escape"){closeModal("modal");closeModal("mmodal");closeModal("hmodal");closeModal("rulesmodal");closeModal("fivbmodal");closeModal("nationmodal");closeMatchView();closeLive();closeTracker();const mn=document.getElementById("menu");if(mn)mn.classList.remove("open")}
+  if(e.key==="Escape"){closeModal("modal");closeModal("mmodal");closeModal("hmodal");closeModal("rulesmodal");closeMatchView();closeLive();const mn=document.getElementById("menu");if(mn)mn.classList.remove("open")}
   if([...document.querySelectorAll(".modal.open")].length)return;
   if(document.getElementById("liveview").classList.contains("open")){
     if(e.key==="1"){state.spotlight="A";renderLive()}
@@ -1149,154 +1084,10 @@ function renderRules(f){
   };
 })();
 
-/* ---------- FIVB import (dev domain, via /api) ---------- */
-let fivbGender="", fivbTimer=null;
-function openFivb(){document.getElementById("fivbQ").value="";document.getElementById("fivbList").innerHTML="";document.getElementById("fivbStatus").textContent="Skriv minst två bokstäver.";openModal("fivbmodal");setTimeout(()=>document.getElementById("fivbQ").focus(),50);}
-function setFivbGender(g){fivbGender=g;fivbSearch();}
-function fivbSearch(){
-  const q=document.getElementById("fivbQ").value.trim();
-  const st=document.getElementById("fivbStatus");
-  if(q.length<2){document.getElementById("fivbList").innerHTML="";st.textContent="Skriv minst två bokstäver.";return;}
-  clearTimeout(fivbTimer);
-  fivbTimer=setTimeout(async()=>{
-    st.textContent="Söker…";
-    try{
-      const r=await fetch("/api/players?q="+encodeURIComponent(q)+(fivbGender?("&gender="+fivbGender):""),{credentials:"include"});
-      const list=await r.json();
-      renderFivbResults(Array.isArray(list)?list:[]);
-    }catch(e){st.textContent="Kunde inte nå FIVB-API:t.";}
-  },300);
-}
-function renderFivbResults(list){
-  const el=document.getElementById("fivbList"), st=document.getElementById("fivbStatus");
-  if(!list.length){st.textContent="Inga träffar.";el.innerHTML="";return;}
-  st.textContent=list.length+" träffar.";
-  el.innerHTML=list.map(p=>`<div class="ruleitem" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><div class="rq">${esc(p.full_name)}</div><div class="ra">${esc([p.country_code,p.gender==="W"?"Dam":(p.gender==="M"?"Herr":"")].filter(Boolean).join(" · "))}</div></div><button class="btn primary" onclick="addFivbPlayer(${intId(p.id)})">Lägg till</button></div>`).join("");
-}
-function intId(x){const n=parseInt(x,10);return Number.isFinite(n)?n:0;}
-async function addFivbPlayer(id){
-  const st=document.getElementById("fivbStatus");st.textContent="Hämtar spelare…";
-  try{
-    const r=await fetch("/api/player?id="+id,{credentials:"include"});
-    const d=await r.json();
-    if(!d||!d.player){st.textContent="Kunde inte hämta spelaren.";return;}
-    const p=d.player,rt=d.rating;
-    const fields=[{label:"Land",value:p.country_code||""}];
-    if(rt&&rt.conservative_rating!=null)fields.push({label:"TrueSkill",value:Number(rt.conservative_rating).toFixed(1)});
-    if(rt&&rt.matches_played!=null)fields.push({label:"Matcher",value:String(rt.matches_played)});
-    const stats=(d.results||[]).slice(0,6).map(x=>x.season+" "+x.tournament_name+(x.placement?(" ("+x.placement+")"):"")+(x.teammate_full_name?(" m. "+x.teammate_full_name):"")).join("\n");
-    const e={id:uid(),name:p.full_name,phon:"",sport:"Beachvolley",team:p.country_code||"",role:"",num:"",color:COLORS[0],record:"",tags:["FIVB"],fields,facts:[],nuggets:(d.storylines||[]).slice(),stats};
-    state.entries.push(e);state.sel=e.id;save();closeModal("fivbmodal");if(state.view!=="board")setView("board");render();
-  }catch(e){st.textContent="Fel vid hämtning.";}
-}
-
-/* ---------- Group B: live match tracker ---------- */
-let trackId=null;
-function liveInit(){return {setsA:0,setsB:0,a:0,b:0,setNo:1,toA:0,toB:0,history:[],stat:{a:{Ess:0,Block:0,Fel:0},b:{Ess:0,Block:0,Fel:0}},sets:[],done:false};}
-function T(){const m=state.matches.find(x=>x.id===trackId);return (m&&m.live)?m:null;}
-function openTracker(id){const m=state.matches.find(x=>x.id===id);if(!m)return;if(!m.live)m.live=liveInit();trackId=id;document.getElementById("trackLabel").textContent=sideName(m,"a")+" vs "+sideName(m,"b");document.getElementById("trackview").classList.add("open");renderTracker();}
-function closeTracker(){document.getElementById("trackview").classList.remove("open");save();}
-function tgt(setNo){return setNo<3?21:15;}
-function checkSet(L){const tg=tgt(L.setNo);if((L.a>=tg||L.b>=tg)&&Math.abs(L.a-L.b)>=2){L.history.push({t:'setwon',setsA:L.setsA,setsB:L.setsB,a:L.a,b:L.b,setNo:L.setNo});L.sets.push({a:L.a,b:L.b});if(L.a>L.b)L.setsA++;else L.setsB++;L.a=0;L.b=0;L.setNo++;if(L.setsA===2||L.setsB===2)L.done=true;}}
-function trackPoint(side){const m=T();if(!m||m.live.done)return;const L=m.live;L[side]=(L[side]||0)+1;L.history.push({t:'pt',side});checkSet(L);renderTracker();save();}
-function trackStat(side,key){const m=T();if(!m)return;m.live.stat[side][key]++;m.live.history.push({t:'stat',side,key});renderTracker();save();}
-function trackTO(side){const m=T();if(!m)return;const L=m.live;if(side==='a')L.toA++;else L.toB++;L.history.push({t:'to',side});renderTracker();save();}
-function trackUndo(){const m=T();if(!m||!m.live.history.length)return;const L=m.live;const h=L.history.pop();
-  if(h.t==='pt')L[h.side]=Math.max(0,L[h.side]-1);
-  else if(h.t==='stat')L.stat[h.side][h.key]=Math.max(0,L.stat[h.side][h.key]-1);
-  else if(h.t==='to'){if(h.side==='a')L.toA=Math.max(0,L.toA-1);else L.toB=Math.max(0,L.toB-1);}
-  else if(h.t==='setwon'){L.sets.pop();L.setsA=h.setsA;L.setsB=h.setsB;L.a=h.a;L.b=h.b;L.setNo=h.setNo;L.done=false;}
-  renderTracker();save();}
-function sideSwitch(L){const sum=L.a+L.b;const iv=L.setNo<3?7:5;return sum>0 && sum%iv===0;}
-function ptInfo(L){const tg=tgt(L.setNo);const out=[];
-  if(L.a>=tg-1 && L.a-L.b>=1)out.push((L.setsA===1?'Matchboll':'Setboll')+' A');
-  if(L.b>=tg-1 && L.b-L.a>=1)out.push((L.setsB===1?'Matchboll':'Setboll')+' B');
-  return out.join('  ·  ');}
-function currentStreak(L){let n=0,side=null;for(let i=L.history.length-1;i>=0;i--){const h=L.history[i];if(h.t!=='pt')continue;if(side===null){side=h.side;n=1;}else if(h.side===side)n++;else break;}return side?(side==='a'?'A':'B')+' +'+n:'';}
-function renderTracker(){
-  const m=T();if(!m)return;const L=m.live;
-  const bn=document.getElementById("trackBanner");const pi=ptInfo(L),sw=sideSwitch(L);
-  bn.className="tbanner"+(L.done?"":(pi?" pt":(sw?" sw":"")));
-  bn.textContent=L.done?("Matchen slut: "+L.setsA+" - "+L.setsB+" i set"):(pi||(sw?"Sidbyte":""));
-  const side=(s,nm)=>{const st=L.stat[s];return `<h2>${esc(nm)}</h2><div class="score">${L[s]}</div>
-    <button class="bigpt" onclick="trackPoint('${s}')"${L.done?" disabled style=opacity:.4":""}>+1 poäng</button>
-    <div class="statrow">${['Ess','Block','Fel'].map(k=>`<button class="statbtn" onclick="trackStat('${s}','${k}')">${k}<b>${st[k]}</b></button>`).join('')}</div>
-    <button class="statbtn" style="max-width:170px" onclick="trackTO('${s}')">Timeout <b>${s==='a'?L.toA:L.toB}</b></button>`;};
-  document.getElementById("tsideA").innerHTML=side('a',sideName(m,'a'));
-  document.getElementById("tsideB").innerHTML=side('b',sideName(m,'b'));
-  const hist=L.sets.map(x=>x.a+'-'+x.b).join(', ');const streak=currentStreak(L);
-  document.getElementById("tmid").innerHTML=`<div class="setno">${L.done?'Slutresultat':'Set '+Math.min(L.setNo,3)}</div><div class="sets">${L.setsA} - ${L.setsB}</div><div class="setno">i set</div>${hist?`<div class="setno" style="font-size:.8em">${esc(hist)}</div>`:''}${(!L.done&&streak)?`<div class="setno">Svit: ${streak}</div>`:''}`;
-}
-function endTracker(){const m=T();if(!m)return;const L=m.live;L.done=true;
-  const sets=L.sets.map(x=>x.a+'-'+x.b).join(', ');
-  const sum="Resultat "+L.setsA+"-"+L.setsB+(sets?" ("+sets+")":"")+". Ess "+L.stat.a.Ess+"-"+L.stat.b.Ess+", Block "+L.stat.a.Block+"-"+L.stat.b.Block+", Fel "+L.stat.a.Fel+"-"+L.stat.b.Fel+".";
-  m.note=(m.note?m.note+" | ":"")+sum;save();renderTracker();alert("Match avslutad och sammanfattad:\n\n"+sum);}
-
-/* ---------- Group A: enrich from FIVB + nation overview ---------- */
-async function enrichFromFivb(id){
-  if(!CLOUD)return;
-  const e=entry(id); if(!e)return;
-  try{
-    const list=await fetch("/api/players?q="+encodeURIComponent(e.name),{credentials:"include"}).then(r=>r.json());
-    if(!Array.isArray(list)||!list.length){alert("Ingen FIVB-träff för "+e.name);return;}
-    const match=list.find(p=>(p.full_name||"").toLowerCase()===e.name.toLowerCase())||list[0];
-    const d=await fetch("/api/player?id="+match.id,{credentials:"include"}).then(r=>r.json());
-    const m=await fetch("/api/milestones?id="+match.id,{credentials:"include"}).then(r=>r.json()).catch(()=>null);
-    const p=d.player||{},rt=d.rating;
-    const fields=[{label:"Land",value:p.country_code||e.team||""}];
-    if(rt&&rt.conservative_rating!=null)fields.push({label:"TrueSkill",value:Number(rt.conservative_rating).toFixed(1)});
-    if(rt&&rt.matches_played!=null)fields.push({label:"Matcher",value:String(rt.matches_played)});
-    const placed=(d.results||[]).filter(x=>x.placement);
-    if(placed.length){const b=placed.reduce((a,x)=>x.placement<a.placement?x:a);fields.push({label:"Bästa",value:b.placement+" ("+b.season+")"});}
-    const seasons=[...new Set((d.results||[]).map(x=>x.season))];
-    if(seasons.length)fields.push({label:"Säsonger",value:String(seasons.length)});
-    const prize=(d.results||[]).reduce((a,x)=>a+(parseFloat(x.prize_money_usd)||0),0);
-    if(prize>0)fields.push({label:"Prispengar",value:Math.round(prize).toLocaleString('sv-SE')+" USD"});
-    e.fields=fields;
-    e.nuggets=[...new Set([...(d.storylines||[]),...(e.nuggets||[])])];
-    const st=(d.results||[]).slice(0,8).map(x=>x.season+" "+x.tournament_name+(x.placement?(" ("+x.placement+")"):"")+(x.teammate_full_name?(" m. "+x.teammate_full_name):"")).join("\n");
-    if(st)e.stats=st;
-    if(m&&m.milestones){const mm=m.milestones.find(x=>x.type==='match_milestone');if(mm)e.record=mm.text;}
-    if(!e.team&&p.country_code)e.team=p.country_code;
-    if(!e.sport)e.sport="Beachvolley";
-    save();render();
-  }catch(err){alert("Kunde inte hämta: "+err.message);}
-}
-function openNations(){
-  const counts={};
-  state.entries.forEach(e=>{const c=((e.team||"?")+"").toUpperCase().trim()||"?";counts[c]=(counts[c]||0)+1;});
-  const arr=Object.entries(counts).sort((a,b)=>((b[0]==='SWE')-(a[0]==='SWE'))||(b[1]-a[1])||a[0].localeCompare(b[0]));
-  document.getElementById("nationSummary").textContent=arr.length+" nationer, "+state.entries.length+" spelare. Svenskar överst.";
-  document.getElementById("nationList").innerHTML=arr.map(([c,n])=>`<div class="ruleitem" style="display:flex;justify-content:space-between;align-items:center${c==='SWE'?';border-left-color:var(--accent)':''}"><span class="rq">${esc(c)}</span><span class="ra">${n} spelare</span></div>`).join("");
-  openModal("nationmodal");
-}
-
-/* ---------- cloud sync via SSO (X-Auth-Email header), dev subdomain only ---------- */
-const CLOUD=/(^|\.)dev\.thebeach\.one$/.test(location.hostname);
-let cloudReady=false;
-async function cloudPull(){
-  if(!CLOUD)return false;
-  try{
-    const r=await fetch("/api/board",{credentials:"include"});
-    if(!r.ok)return false;
-    const j=await r.json();
-    const d=j&&j.data?(typeof j.data==="string"?JSON.parse(j.data):j.data):null;
-    if(d&&Array.isArray(d.entries)){state.entries=d.entries;state.matches=d.matches||[];state.logs=d.logs||[];state.phrases=d.phrases||[];return true}
-  }catch(e){}
-  return false;
-}
-let cloudTimer=null;
-function cloudPush(){
-  if(!CLOUD||!cloudReady)return;
-  clearTimeout(cloudTimer);
-  cloudTimer=setTimeout(()=>{fetch("/api/board",{method:"PUT",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({entries:state.entries,matches:state.matches,logs:state.logs,phrases:state.phrases})}).catch(()=>{})},1200);
-}
-
 /* init */
 const sf=localStorage.getItem("fs");if(sf)document.documentElement.style.setProperty("--fs",sf);
 try{const m=JSON.parse(localStorage.getItem("spotterboard.match"));if(m){state.matchA=m.a;state.matchB=m.b}}catch(e){}
 load();render();
-if(CLOUD){document.getElementById("fivbBtn").style.display="block";cloudPull().then(ok=>{cloudReady=true;if(ok)render();else cloudPush()});}
 if("serviceWorker" in navigator && location.protocol.indexOf("http")===0){navigator.serviceWorker.register("sw.js").catch(()=>{})}
 if(!localStorage.getItem("spotterboard.onboarded")){openHelp();localStorage.setItem("spotterboard.onboarded","1")}
 checkNudge();
